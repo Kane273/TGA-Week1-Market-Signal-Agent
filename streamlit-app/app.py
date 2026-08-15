@@ -12,6 +12,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import re
 import os
+import json
+from openai import OpenAI
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import warnings
@@ -463,107 +465,270 @@ def _most_active(df: pd.DataFrame, n: int = 10) -> str:
 DISCLAIMER = "\n\n---\n*All information provided is for informational purposes only and does not constitute financial advice. Always do your own research and consult a licensed financial advisor before making investment decisions.*"
 
 
-def _agent_respond_inner(user_msg: str, df: pd.DataFrame) -> str:
+# ── OpenAI client ──────────────────────────────────────────────────────────────
+
+@st.cache_resource
+def get_openai_client():
+    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
+    api_key  = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY")
+    if not base_url or not api_key:
+        return None
+    try:
+        return OpenAI(base_url=base_url, api_key=api_key)
+    except Exception:
+        return None
+
+
+# ── Tool implementations ───────────────────────────────────────────────────────
+
+def _tool_market_overview(df: pd.DataFrame) -> str:
+    total = len(df)
+    g = int((df["% Change"] > 0).sum())
+    l = int((df["% Change"] < 0).sum())
+    avg = df["% Change"].mean()
+    perf = (df[df["Sector"] != "Unknown"]
+            .groupby("Sector")["% Change"].mean()
+            .sort_values(ascending=False))
+    sector_lines = "\n".join(f"  {s}: {p:+.2f}%" for s, p in perf.items())
+    return (f"Total stocks: {total:,} | Gainers: {g:,} ({g/total*100:.1f}%) | "
+            f"Losers: {l:,} ({l/total*100:.1f}%) | Unchanged: {total-g-l:,}\n"
+            f"Average daily change: {avg:+.2f}%\n"
+            f"Best sector: {perf.index[0]} ({perf.iloc[0]:+.2f}%) | "
+            f"Worst sector: {perf.index[-1]} ({perf.iloc[-1]:+.2f}%)\n\n"
+            f"All sectors:\n{sector_lines}")
+
+
+def _tool_sector(sector: str, df: pd.DataFrame) -> str:
+    sectors = [s for s in df["Sector"].unique() if s and s != "Unknown"]
+    match = next((s for s in sectors if s.lower() == sector.lower()), None)
+    if not match:
+        match = next((s for s in sectors if sector.lower() in s.lower()), None)
+    if match:
+        return _sector_analysis(match, df)
+    return f"Sector '{sector}' not found. Available sectors: {', '.join(sorted(sectors))}"
+
+
+def _tool_compare(symbols: list, df: pd.DataFrame) -> str:
+    results, missing = [], []
+    for sym in symbols[:6]:
+        rows = df[df["Symbol"].str.upper() == sym.upper()]
+        if not rows.empty:
+            results.append(compute_scores(rows).iloc[0])
+        else:
+            missing.append(sym.upper())
+    if not results:
+        return "None of the specified symbols were found in the dataset."
+    lines = [
+        f"{r['Symbol']} | {r['Name'][:25]} | ${r['Last Sale']:.2f} | "
+        f"{r['% Change']:+.2f}% | Vol: {r['Volume']:,.0f} | "
+        f"MCap: {_fmt_mcap(r['Market Cap'])} | Score: {r['score']:.0f}/100"
+        for r in results
+    ]
+    out = "\n".join(lines)
+    if missing:
+        out += f"\n\nNot found in dataset: {', '.join(missing)}"
+    return out
+
+
+# ── Tool specs (OpenAI function-calling format) ────────────────────────────────
+
+_TOOL_SPECS = [
+    {"type": "function", "function": {
+        "name": "lookup_stock",
+        "description": "Look up price, volume, sector, market cap, and composite score for a specific stock ticker from the NASDAQ dataset.",
+        "parameters": {"type": "object",
+                       "properties": {"symbol": {"type": "string", "description": "Ticker symbol e.g. AAPL, NVDA, TSLA"}},
+                       "required": ["symbol"]},
+    }},
+    {"type": "function", "function": {
+        "name": "get_top_gainers",
+        "description": "Get the top gaining stocks today ranked by % price change.",
+        "parameters": {"type": "object",
+                       "properties": {"n": {"type": "integer", "description": "How many to return (default 10)"}}},
+    }},
+    {"type": "function", "function": {
+        "name": "get_top_losers",
+        "description": "Get the biggest losing stocks today ranked by % price change.",
+        "parameters": {"type": "object",
+                       "properties": {"n": {"type": "integer", "description": "How many to return (default 10)"}}},
+    }},
+    {"type": "function", "function": {
+        "name": "get_most_active",
+        "description": "Get the most actively traded stocks by volume today.",
+        "parameters": {"type": "object",
+                       "properties": {"n": {"type": "integer", "description": "How many to return (default 10)"}}},
+    }},
+    {"type": "function", "function": {
+        "name": "get_top_picks",
+        "description": "Get top-scored stocks from the composite screening model (momentum + volume + market cap + price).",
+        "parameters": {"type": "object", "properties": {}},
+    }},
+    {"type": "function", "function": {
+        "name": "get_sector_analysis",
+        "description": "Get performance breakdown and top stocks for a specific market sector.",
+        "parameters": {"type": "object",
+                       "properties": {"sector": {"type": "string", "description": "Sector name e.g. Technology, Healthcare, Finance, Energy"}},
+                       "required": ["sector"]},
+    }},
+    {"type": "function", "function": {
+        "name": "get_market_overview",
+        "description": "Get broad market overview: gainers/losers count, sector performance rankings, average daily change.",
+        "parameters": {"type": "object", "properties": {}},
+    }},
+    {"type": "function", "function": {
+        "name": "compare_stocks",
+        "description": "Compare multiple stocks side by side on price, change, volume, market cap, and composite score.",
+        "parameters": {"type": "object",
+                       "properties": {"symbols": {"type": "array", "items": {"type": "string"},
+                                                  "description": "Ticker symbols to compare e.g. ['AAPL','MSFT','GOOGL']"}},
+                       "required": ["symbols"]},
+    }},
+]
+
+_SYSTEM_PROMPT = """You are a stock market data analyst assistant embedded in a NASDAQ stock screener app. You have access to live NASDAQ screening data covering 7,000+ stocks with price, volume, sector, market cap, and daily % change.
+
+Use the provided tools to fetch real data before answering questions about specific stocks, sectors, or market conditions. Call multiple tools in parallel when useful.
+
+Rules:
+- Always base your answers on real data from the tools, not assumptions or general knowledge about prices
+- Format data clearly using markdown tables or numbered lists
+- Never make explicit investment recommendations or tell users to buy or sell any asset
+- Present analysis objectively and note it is for informational purposes only
+- When users ask about live RSI, analyst price targets, or charts, mention the Stock Detail page for live yfinance data
+- Be conversational and precise; don't pad responses unnecessarily
+- For educational questions (what is RSI, how does MACD work, etc.), explain clearly without excessive jargon"""
+
+
+def _dispatch_tool(name: str, args: dict, df: pd.DataFrame) -> str:
+    try:
+        if name == "lookup_stock":
+            return _stock_analysis_csv(args.get("symbol", "").upper(), df)
+        elif name == "get_top_gainers":
+            return _gainers_losers(df, "gainers", int(args.get("n", 10)))
+        elif name == "get_top_losers":
+            return _gainers_losers(df, "losers", int(args.get("n", 10)))
+        elif name == "get_most_active":
+            return _most_active(df, int(args.get("n", 10)))
+        elif name == "get_top_picks":
+            return _top_picks_summary(df)
+        elif name == "get_sector_analysis":
+            return _tool_sector(args.get("sector", ""), df)
+        elif name == "get_market_overview":
+            return _tool_market_overview(df)
+        elif name == "compare_stocks":
+            return _tool_compare(args.get("symbols", []), df)
+        return f"Unknown tool: {name}"
+    except Exception as e:
+        return f"Error in {name}: {e}"
+
+
+def agent_respond_stream(user_msg: str, df: pd.DataFrame, history: list = None):
+    """Streaming generator that yields response text tokens."""
+    client = get_openai_client()
+
+    if not client:
+        # Fallback: rule-based responses
+        yield _agent_respond_inner_fallback(user_msg, df) + DISCLAIMER
+        return
+
+    # Build message list with trimmed conversation history
+    messages = [{"role": "system", "content": _SYSTEM_PROMPT}]
+    if history:
+        for m in history[-20:]:
+            if m.get("role") in ("user", "assistant") and m.get("content"):
+                # Strip the disclaimer from stored assistant messages before sending
+                content = m["content"]
+                if "---\n*All information" in content:
+                    content = content[:content.index("---\n*All information")].rstrip()
+                messages.append({"role": m["role"], "content": content})
+    messages.append({"role": "user", "content": user_msg})
+
+    try:
+        # Step 1: first call handles tool selection (not streamed, needed for tool use)
+        resp = client.chat.completions.create(
+            model="gpt-5.6-luna",
+            messages=messages,
+            tools=_TOOL_SPECS,
+            tool_choice="auto",
+            max_completion_tokens=2048,
+        )
+        msg = resp.choices[0].message
+
+        # Step 2: execute any requested tool calls
+        if msg.tool_calls:
+            messages.append(msg)
+            for tc in msg.tool_calls:
+                args = json.loads(tc.function.arguments or "{}")
+                result = _dispatch_tool(tc.function.name, args, df)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result,
+                })
+
+            # Step 3: stream the synthesised response
+            stream = client.chat.completions.create(
+                model="gpt-5.6-luna",
+                messages=messages,
+                max_completion_tokens=2048,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+        else:
+            # No tools needed — direct answer
+            yield msg.content or ""
+
+        yield DISCLAIMER
+
+    except Exception as e:
+        try:
+            yield _agent_respond_inner_fallback(user_msg, df) + DISCLAIMER
+        except Exception:
+            yield f"I encountered an error processing your request. Please try again.\n\n*Error: {e}*" + DISCLAIMER
+
+
+# ── Rule-based fallback (kept for offline / error cases) ─────────────────────
+
+def _agent_respond_inner_fallback(user_msg: str, df: pd.DataFrame) -> str:
     msg = user_msg.strip()
     msg_lower = msg.lower()
 
-    if re.match(r"^(hi|hello|hey|howdy|sup|what'?s up|yo)\b", msg_lower):
-        return ("Hello! I'm your stock analysis agent. I can help you with:\n\n"
-                "- **Analyze a ticker**: type `AAPL` or `analyze NVDA`\n"
-                "- **Top picks**: `show top picks`\n"
-                "- **Gainers / Losers**: `top gainers` or `biggest losers`\n"
-                "- **Most active**: `most active stocks`\n"
-                "- **Sector**: `technology sector` or `all sectors`\n"
-                "- **Compare**: `AAPL vs MSFT`\n"
-                "- **Education**: `explain RSI`, `MACD`, `momentum`, `short squeeze`, `P/E ratio`, `breakout`, etc.\n\n"
-                "For live RSI, charts, and analyst targets, use the **Stock Detail** page.")
-
-    # Analyze intent
     analyze_match = re.search(
         r"\b(?:analyze|analysis|tell me about|what about|look at|check|research|thoughts on|opinion on)\s+([A-Z]{1,5})\b",
         msg, re.IGNORECASE)
     if analyze_match:
         return _stock_analysis_csv(analyze_match.group(1).upper(), df)
 
-    # Bare ticker
     bare = re.match(r"^\s*([A-Z]{1,5})\s*\??$", msg.upper())
     if bare and bare.group(1) not in {"RSI", "PE", "MA", "EMA", "SMA", "ETF", "IPO"}:
         return _stock_analysis_csv(bare.group(1), df)
 
-    # Compare
     vs_match = re.search(r"\b([A-Z]{1,5})\s+vs\.?\s+([A-Z]{1,5})\b", msg.upper())
     if vs_match:
-        a, b = vs_match.group(1), vs_match.group(2)
-        results = []
-        for sym in [a, b]:
-            rows = df[df["Symbol"].str.upper() == sym]
-            if not rows.empty:
-                sc = compute_scores(rows).iloc[0]
-                results.append(sc)
-        if not results:
-            return "I couldn't find either symbol in the dataset."
-        lines = []
-        for r in results:
-            lines.append(f"**{r['Symbol']}** — {r['Name'][:28]}\n"
-                         f"  ${r['Last Sale']:.2f} | {r['% Change']:+.2f}% | "
-                         f"Vol: {r['Volume']:,.0f} | {_fmt_mcap(r['Market Cap'])} | Score: {r['score']:.0f}/100")
-        winner = max(results, key=lambda r: r["score"])
-        return "**Comparison**\n\n" + "\n\n".join(lines) + f"\n\n**Best by score**: {winner['Symbol']} ({winner['score']:.0f}/100)"
+        return _tool_compare([vs_match.group(1), vs_match.group(2)], df)
 
-    if re.search(r"\bcompare\b", msg_lower):
-        tickers = [t for t in re.findall(r"\b([A-Z]{1,5})\b", msg.upper())
-                   if t not in {"VS", "AND", "OR", "TO", "THE", "RSI", "PE", "MA", "COMPARE"}]
-        if len(tickers) >= 2:
-            results = []
-            for sym in tickers[:5]:
-                rows = df[df["Symbol"].str.upper() == sym]
-                if not rows.empty:
-                    results.append(compute_scores(rows).iloc[0])
-            if results:
-                lines = [f"**{r['Symbol']}** — ${r['Last Sale']:.2f} | {r['% Change']:+.2f}% | Score: {r['score']:.0f}/100"
-                         for r in results]
-                winner = max(results, key=lambda r: r["score"])
-                return "**Comparison**\n\n" + "\n".join(lines) + f"\n\n**Best by score**: {winner['Symbol']}"
-
-    if re.search(r"\b(top pick|best stock|high gain|high.potential|highest score|highest scoring)\b", msg_lower):
+    if re.search(r"\b(top pick|best stock|high gain|highest score|highest scoring)\b", msg_lower):
         return _top_picks_summary(df)
-
-    if re.search(r"\b(top gainer|biggest gainer|most gained|up the most|rising|best performer)\b", msg_lower):
+    if re.search(r"\b(top gainer|biggest gainer|most gained|best performer)\b", msg_lower):
         return _gainers_losers(df, "gainers")
-
-    if re.search(r"\b(top loser|biggest loser|most lost|down the most|falling|worst)\b", msg_lower):
+    if re.search(r"\b(top loser|biggest loser|most lost|worst)\b", msg_lower):
         return _gainers_losers(df, "losers")
-
-    if re.search(r"\b(most active|highest volume|most traded|most liquid)\b", msg_lower):
+    if re.search(r"\b(most active|highest volume|most traded)\b", msg_lower):
         return _most_active(df)
+    if re.search(r"\bmarket\b", msg_lower):
+        return _tool_market_overview(df)
 
     for sec in [s for s in df["Sector"].unique() if s and s != "Unknown"]:
         if sec.lower() in msg_lower:
             return _sector_analysis(sec, df)
 
-    if re.search(r"\bsector\b", msg_lower):
-        perf = (df[df["Sector"] != "Unknown"].groupby("Sector")["% Change"]
-                .mean().sort_values(ascending=False))
-        lines = "\n".join(f"  {i+1}. **{s}**: {p:+.2f}%" for i, (s, p) in enumerate(perf.items()))
-        return f"**All Sectors (Avg % Change)**\n\n{lines}"
-
-    if re.search(r"\b(how many|total|dataset|universe|stocks in)\b", msg_lower):
-        total = len(df)
-        g = (df["% Change"] > 0).sum()
-        l = (df["% Change"] < 0).sum()
-        return (f"**Dataset Overview**\n\n"
-                f"- Total stocks: **{total:,}**\n"
-                f"- Sectors: **{df['Sector'].nunique()}**\n"
-                f"- Countries: **{df['Country'].nunique()}**\n"
-                f"- Gainers today: **{g:,}** ({g/total*100:.1f}%)\n"
-                f"- Losers today: **{l:,}** ({l/total*100:.1f}%)\n"
-                f"- Unchanged: **{total-g-l:,}**")
-
     for key, content in KNOWLEDGE_BASE.items():
         if key in msg_lower:
             return content
 
-    # Any ticker mentioned
     ignore = {"I","A","AN","THE","IS","IT","IN","OF","TO","DO","BE","GO","MY","WE","US","ON",
               "AT","BY","AS","UP","OR","AND","FOR","ARE","WAS","RSI","PE","MA","EMA","SMA",
               "ETF","IPO","CEO","CFO","CTO","EPS","ROI","AI"}
@@ -571,21 +736,13 @@ def _agent_respond_inner(user_msg: str, df: pd.DataFrame) -> str:
         if t not in ignore and not df[df["Symbol"].str.upper() == t].empty:
             return _stock_analysis_csv(t, df)
 
-    return ("I can help with:\n\n"
-            "- **Ticker**: type `AAPL` or `analyze MSFT`\n"
-            "- **Top picks**: `top picks today`\n"
-            "- **Gainers/Losers**: `top gainers` or `biggest losers`\n"
-            "- **Most active**: `most active stocks`\n"
-            "- **Sector**: `technology sector` or `all sectors`\n"
-            "- **Compare**: `AAPL vs MSFT`\n"
-            "- **Education**: `RSI`, `MACD`, `moving average`, `momentum`, `short squeeze`, "
-            "`market cap`, `PE ratio`, `breakout`, `earnings`, `stop loss`, `diversification`, "
-            "`sector rotation`, `yfinance`"
-            )
-
-
-def agent_respond(user_msg: str, df: pd.DataFrame) -> str:
-    return _agent_respond_inner(user_msg, df) + DISCLAIMER
+    return ("Ask me anything about stocks or the market, for example:\n\n"
+            "- *How is the market today?*\n"
+            "- *Tell me about NVDA*\n"
+            "- *Compare AAPL vs MSFT*\n"
+            "- *Show top picks*\n"
+            "- *How is the tech sector doing?*\n"
+            "- *Explain RSI or MACD*")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -921,7 +1078,7 @@ def page_stock_detail(df: pd.DataFrame):
 
 def page_ai_agent(df: pd.DataFrame):
     st.title("💬 AI Stock Analysis Agent")
-    st.caption("Local agent — no external AI needed. Analyzes stocks from NASDAQ data and explains market concepts.")
+    st.caption("Powered by GPT — asks live NASDAQ data, explains concepts, and answers naturally.")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -929,23 +1086,23 @@ def page_ai_agent(df: pd.DataFrame):
         st.session_state.pending_q = None
 
     with st.sidebar:
-        st.subheader("💡 Quick Questions")
+        st.subheader("💡 Ask something like…")
         quick_qs = [
-            "Show me the top picks today",
-            "Top gainers today",
-            "Biggest losers today",
-            "Most active stocks",
-            "Technology sector",
-            "Healthcare sector",
+            "What's the market looking like today?",
+            "Show me the top picks",
+            "Who are the biggest gainers?",
+            "Which stocks are falling the most?",
+            "Most active stocks right now",
+            "How is the tech sector doing?",
+            "Tell me about NVDA",
+            "Compare AAPL vs MSFT vs GOOGL",
             "Explain RSI",
             "What is a short squeeze?",
-            "Explain momentum investing",
+            "How does momentum investing work?",
             "What is market cap?",
-            "How do earnings affect stocks?",
-            "Explain stop loss orders",
         ]
         for q in quick_qs:
-            if st.button(q, use_container_width=True, key=f"q_{q[:18]}"):
+            if st.button(q, use_container_width=True, key=f"q_{q[:22]}"):
                 st.session_state.pending_q = q
                 st.rerun()
 
@@ -956,10 +1113,10 @@ def page_ai_agent(df: pd.DataFrame):
 
         st.markdown("---")
         st.caption("**Tips:**")
-        st.caption("• Type a ticker: `AAPL`")
-        st.caption("• Compare: `AAPL vs MSFT`")
-        st.caption("• Concepts: `explain MACD`")
-        st.caption("• For live charts, use Stock Detail")
+        st.caption("• Natural language: *How is energy doing?*")
+        st.caption("• Any ticker: *Tell me about TSLA*")
+        st.caption("• Compare: *AAPL vs MSFT vs AMZN*")
+        st.caption("• For live RSI & charts → Stock Detail")
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
@@ -969,16 +1126,20 @@ def page_ai_agent(df: pd.DataFrame):
     if prompt:
         st.session_state.pending_q = None
     else:
-        prompt = st.chat_input("Ask about any stock, strategy, or market concept…")
+        prompt = st.chat_input("Ask about any stock, sector, or market concept…")
 
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-        response = agent_respond(prompt, df)
+
+        history = st.session_state.messages[:-1]  # history without current user msg
         with st.chat_message("assistant"):
-            st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            response_text = st.write_stream(
+                agent_respond_stream(prompt, df, history)
+            )
+
+        st.session_state.messages.append({"role": "assistant", "content": response_text})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
