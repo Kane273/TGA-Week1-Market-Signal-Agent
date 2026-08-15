@@ -1336,7 +1336,7 @@ def page_market_overview(df: pd.DataFrame):
         st.dataframe(
             top_g[["Symbol","Name","Last Sale","% Change","Volume"]].style
             .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
-            .applymap(lambda v: "color:#10b981;font-weight:700" if isinstance(v, (int,float)) and v > 0 else "", subset=["% Change"]),
+            .map(lambda v: "color:#10b981;font-weight:700" if isinstance(v, (int,float)) and v > 0 else "", subset=["% Change"]),
             use_container_width=True, height=340,
         )
     with c2:
@@ -1345,7 +1345,7 @@ def page_market_overview(df: pd.DataFrame):
         st.dataframe(
             top_l[["Symbol","Name","Last Sale","% Change","Volume"]].style
             .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
-            .applymap(lambda v: "color:#f43f5e;font-weight:700" if isinstance(v, (int,float)) and v < 0 else "", subset=["% Change"]),
+            .map(lambda v: "color:#f43f5e;font-weight:700" if isinstance(v, (int,float)) and v < 0 else "", subset=["% Change"]),
             use_container_width=True, height=340,
         )
 
