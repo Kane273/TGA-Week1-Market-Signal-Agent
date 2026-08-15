@@ -1119,12 +1119,14 @@ def agent_respond_stream(user_msg: str, df: pd.DataFrame, history: list = None):
 
     try:
         # Step 1: first call handles tool selection (not streamed, needed for tool use)
+        # reasoning_effort='none' required for function tools with gpt-5.6 models
         resp = client.chat.completions.create(
             model="gpt-5.6-luna",
             messages=messages,
             tools=_TOOL_SPECS,
             tool_choice="auto",
             max_completion_tokens=2048,
+            reasoning_effort="none",
         )
         msg = resp.choices[0].message
 
@@ -1148,6 +1150,8 @@ def agent_respond_stream(user_msg: str, df: pd.DataFrame, history: list = None):
                 stream=True,
             )
             for chunk in stream:
+                if not chunk.choices:
+                    continue
                 delta = chunk.choices[0].delta.content
                 if delta:
                     yield delta
