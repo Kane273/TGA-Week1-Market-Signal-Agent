@@ -33,191 +33,325 @@ st.set_page_config(
 def _inject_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-    /* ── Foundation ─────────────────────────────────────── */
-    html, body, .stApp {
-        background: #060b18 !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    /* ─── Reset & base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body,
+    .stApp,
+    .stAppViewContainer,
+    [data-testid="stAppViewContainer"] {
+        background: #07091a !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        color: #94a3b8 !important;
     }
-    .stApp > header { background: transparent !important; }
-    .block-container { padding-top: 1.6rem !important; padding-bottom: 2rem !important; }
 
-    /* ── Sidebar ─────────────────────────────────────────── */
+    /* Streamlit top toolbar → blend into background */
+    [data-testid="stHeader"],
+    .stApp > header {
+        background: #07091a !important;
+        border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+        backdrop-filter: none !important;
+    }
+
+    /* Main content padding */
+    .main .block-container,
+    section.main .block-container {
+        padding: 2.2rem 2.8rem 3rem !important;
+        max-width: 100% !important;
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────── */
+    [data-testid="stSidebar"],
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #08101f 0%, #060b18 100%) !important;
-        border-right: 1px solid rgba(99,102,241,0.18) !important;
+        background: #070916 !important;
+        border-right: 1px solid rgba(255,255,255,0.045) !important;
     }
-    section[data-testid="stSidebar"] .block-container { padding-top: 0.5rem !important; }
+    [data-testid="stSidebar"] .block-container {
+        padding: 0.75rem 1rem 2rem !important;
+    }
 
-    /* ── Typography ──────────────────────────────────────── */
+    /* ─── Typography ────────────────────────────────────────── */
     h1 {
-        background: linear-gradient(130deg, #e2e8f0 0%, #a5b4fc 55%, #818cf8 100%) !important;
+        background: linear-gradient(135deg, #f8faff 0%, #c7d2fe 45%, #a78bfa 100%) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
         font-weight: 900 !important;
-        letter-spacing: -0.04em !important;
-        line-height: 1.1 !important;
-        margin-bottom: 0.15rem !important;
+        letter-spacing: -0.045em !important;
+        line-height: 1.08 !important;
+        margin-bottom: 0.2rem !important;
+        font-size: 2.35rem !important;
     }
-    h2 { color: #cbd5e1 !important; font-weight: 700 !important; letter-spacing: -0.025em !important; }
-    h3 { color: #94a3b8 !important; font-weight: 600 !important; letter-spacing: -0.015em !important; }
-    p, li { color: #94a3b8; }
-    .stCaption, small { color: #475569 !important; font-size: 0.75rem !important; }
-    hr { border-color: rgba(99,102,241,0.13) !important; margin: 1.2rem 0 !important; }
+    h2 {
+        color: #dde4f0 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.03em !important;
+    }
+    h3, h4 {
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 0.6rem !important;
+    }
+    p, li { color: #94a3b8 !important; line-height: 1.65 !important; }
+    strong, b { color: #cbd5e1 !important; font-weight: 600 !important; }
+    .stCaption, small, [data-testid="stCaptionContainer"] p {
+        color: #3a4d68 !important;
+        font-size: 0.74rem !important;
+    }
+    hr {
+        border: none !important;
+        border-top: 1px solid rgba(255,255,255,0.055) !important;
+        margin: 1.6rem 0 !important;
+    }
 
-    /* ── Metric cards ────────────────────────────────────── */
+    /* ─── Metric containers ─────────────────────────────────── */
     [data-testid="metric-container"] {
-        background: linear-gradient(135deg, #0c1525 0%, #0f1d38 100%) !important;
-        border: 1px solid rgba(99,102,241,0.22) !important;
-        border-radius: 16px !important;
-        padding: 20px 22px !important;
-        box-shadow: 0 4px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04) !important;
-        transition: border-color 0.2s, box-shadow 0.2s !important;
+        background: linear-gradient(145deg, #0c1526 0%, #101d38 100%) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 20px !important;
+        padding: 22px 24px !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-shadow:
+            0 1px 0 rgba(255,255,255,0.06) inset,
+            0 8px 40px rgba(0,0,0,0.55) !important;
+        transition: border-color 0.25s, box-shadow 0.25s !important;
+    }
+    [data-testid="metric-container"]::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important; left: 0 !important; right: 0 !important; height: 1px !important;
+        background: linear-gradient(90deg, transparent 0%, rgba(167,139,250,0.35) 50%, transparent 100%) !important;
+        pointer-events: none !important;
     }
     [data-testid="metric-container"]:hover {
-        border-color: rgba(99,102,241,0.42) !important;
-        box-shadow: 0 6px 34px rgba(0,0,0,0.55), 0 0 0 1px rgba(99,102,241,0.15) !important;
+        border-color: rgba(167,139,250,0.2) !important;
+        box-shadow:
+            0 1px 0 rgba(255,255,255,0.07) inset,
+            0 12px 48px rgba(0,0,0,0.6),
+            0 0 28px rgba(99,102,241,0.07) !important;
     }
     [data-testid="stMetricLabel"] > div {
-        font-size: 0.67rem !important; font-weight: 700 !important;
-        text-transform: uppercase !important; letter-spacing: 0.12em !important;
-        color: #3d4f68 !important;
+        font-size: 0.64rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.15em !important;
+        color: #2d3e58 !important;
     }
     [data-testid="stMetricValue"] > div {
-        font-size: 1.85rem !important; font-weight: 800 !important;
-        color: #e2e8f0 !important; letter-spacing: -0.03em !important;
-        line-height: 1.15 !important;
+        font-size: 1.9rem !important;
+        font-weight: 800 !important;
+        color: #f0f4ff !important;
+        letter-spacing: -0.035em !important;
+        line-height: 1.1 !important;
     }
     [data-testid="stMetricDelta"] > div {
-        font-size: 0.78rem !important; font-weight: 600 !important; letter-spacing: 0.01em !important;
+        font-size: 0.77rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.01em !important;
     }
 
-    /* ── Buttons ─────────────────────────────────────────── */
+    /* ─── Plotly chart card containers ─────────────────────── */
+    /* This gives ALL charts a glass-card background automatically */
+    [data-testid="stPlotlyChart"] {
+        background: linear-gradient(145deg, #0c1526 0%, #101d38 100%) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 20px !important;
+        padding: 20px 18px 14px !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-shadow:
+            0 1px 0 rgba(255,255,255,0.055) inset,
+            0 8px 40px rgba(0,0,0,0.5) !important;
+    }
+    [data-testid="stPlotlyChart"]::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important; left: 0 !important; right: 0 !important; height: 1px !important;
+        background: linear-gradient(90deg, transparent, rgba(167,139,250,0.2), transparent) !important;
+        pointer-events: none !important;
+    }
+
+    /* ─── Buttons ───────────────────────────────────────────── */
     .stButton > button {
-        background: rgba(8,16,31,0.75) !important;
-        color: #64748b !important;
-        border: 1px solid rgba(99,102,241,0.16) !important;
+        background: rgba(11, 16, 34, 0.85) !important;
+        color: #55657e !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
         border-radius: 10px !important;
-        font-size: 0.78rem !important; font-weight: 500 !important;
-        transition: all 0.15s ease !important;
-        text-align: left !important; letter-spacing: 0.01em !important;
-        padding: 7px 12px !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        transition: all 0.18s cubic-bezier(0.4,0,0.2,1) !important;
+        text-align: left !important;
+        letter-spacing: 0.01em !important;
+        padding: 8px 13px !important;
     }
     .stButton > button:hover {
-        background: rgba(99,102,241,0.11) !important;
+        background: rgba(99,102,241,0.1) !important;
         color: #c7d2fe !important;
-        border-color: rgba(99,102,241,0.42) !important;
-        box-shadow: 0 0 16px rgba(99,102,241,0.18) !important;
+        border-color: rgba(99,102,241,0.3) !important;
+        box-shadow: 0 0 20px rgba(99,102,241,0.14), 0 4px 16px rgba(0,0,0,0.3) !important;
         transform: translateX(3px) !important;
     }
     [data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%) !important;
-        color: #fff !important; border: none !important;
-        font-weight: 700 !important; letter-spacing: 0.02em !important;
-        box-shadow: 0 4px 18px rgba(99,102,241,0.38) !important;
-        padding: 10px 20px !important; text-align: center !important;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+        color: #fff !important;
+        border: 1px solid rgba(167,139,250,0.3) !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.025em !important;
+        box-shadow:
+            0 1px 0 rgba(255,255,255,0.18) inset,
+            0 4px 22px rgba(99,102,241,0.42) !important;
+        text-align: center !important;
     }
     [data-testid="baseButton-primary"]:hover {
-        box-shadow: 0 6px 28px rgba(99,102,241,0.55) !important;
+        box-shadow:
+            0 1px 0 rgba(255,255,255,0.2) inset,
+            0 6px 32px rgba(99,102,241,0.58) !important;
         transform: translateY(-1px) !important;
     }
 
-    /* ── Select / inputs ─────────────────────────────────── */
-    .stSelectbox > div > div,
+    /* ─── Inputs / Selects ──────────────────────────────────── */
+    .stSelectbox [data-baseweb="select"] > div,
     .stNumberInput > div > div > input,
     .stTextInput > div > div > input {
-        background: rgba(8,13,28,0.9) !important;
-        border: 1px solid rgba(99,102,241,0.2) !important;
-        border-radius: 9px !important;
-        color: #e2e8f0 !important;
-        font-size: 0.85rem !important;
+        background: rgba(8, 12, 26, 0.9) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 10px !important;
+        color: #dde4f0 !important;
+        font-size: 0.84rem !important;
     }
-    .stSlider [data-baseweb="slider"] [role="slider"] { background: #6366f1 !important; }
-    .stSlider [data-baseweb="slider"] [data-testid="stSliderTrackFill"] { background: #6366f1 !important; }
+    .stSelectbox [data-baseweb="select"] > div:focus-within,
+    .stNumberInput > div > div > input:focus,
+    .stTextInput > div > div > input:focus {
+        border-color: rgba(99,102,241,0.45) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important;
+        outline: none !important;
+    }
+    .stSlider [data-baseweb="slider"] [role="slider"] {
+        background: #6366f1 !important;
+        box-shadow: 0 0 12px rgba(99,102,241,0.55) !important;
+    }
+    .stSlider [data-baseweb="slider"] [data-testid="stSliderTrackFill"] {
+        background: linear-gradient(90deg, #4f46e5, #7c3aed) !important;
+    }
 
-    /* ── Expander ────────────────────────────────────────── */
+    /* ─── Expander ──────────────────────────────────────────── */
     details > summary {
-        background: rgba(8,16,31,0.75) !important;
-        border: 1px solid rgba(99,102,241,0.18) !important;
-        border-radius: 11px !important;
+        background: rgba(10, 14, 28, 0.8) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 12px !important;
         color: #94a3b8 !important;
-        padding: 10px 16px !important;
-        font-weight: 600 !important; font-size: 0.85rem !important;
+        padding: 11px 16px !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        cursor: pointer !important;
+        transition: all 0.16s !important;
     }
-    details[open] > summary { border-radius: 11px 11px 0 0 !important; }
+    details > summary:hover {
+        border-color: rgba(99,102,241,0.28) !important;
+        color: #c7d2fe !important;
+    }
+    details[open] > summary {
+        border-radius: 12px 12px 0 0 !important;
+        border-color: rgba(99,102,241,0.22) !important;
+        color: #a5b4fc !important;
+    }
 
-    /* ── Alert boxes ─────────────────────────────────────── */
+    /* ─── Alert boxes ───────────────────────────────────────── */
     [data-testid="stAlert"] {
-        border-radius: 11px !important; border-left-width: 3px !important;
-        background: rgba(8,16,31,0.7) !important;
+        background: rgba(10, 14, 28, 0.75) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-left-width: 3px !important;
+        border-radius: 12px !important;
     }
 
-    /* ── DataFrames ──────────────────────────────────────── */
-    .stDataFrame, [data-testid="stDataFrameResizable"] {
-        border-radius: 13px !important; overflow: hidden !important;
-        border: 1px solid rgba(99,102,241,0.14) !important;
+    /* ─── DataFrames ────────────────────────────────────────── */
+    .stDataFrame,
+    [data-testid="stDataFrameResizable"] {
+        background: linear-gradient(145deg, #0c1526, #101d38) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 18px !important;
+        overflow: hidden !important;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.45) !important;
     }
 
-    /* ── Chat ────────────────────────────────────────────── */
+    /* ─── Chat ──────────────────────────────────────────────── */
     [data-testid="stChatMessage"] {
-        background: rgba(8,16,31,0.55) !important;
-        border: 1px solid rgba(99,102,241,0.11) !important;
-        border-radius: 14px !important;
-        margin: 5px 0 !important;
+        background: rgba(10, 14, 28, 0.65) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        border-radius: 18px !important;
+        margin: 6px 0 !important;
     }
     [data-testid="stChatInput"] textarea {
-        background: rgba(8,16,31,0.92) !important;
-        border: 1px solid rgba(99,102,241,0.28) !important;
-        border-radius: 14px !important;
-        color: #e2e8f0 !important; font-size: 0.88rem !important;
+        background: rgba(10, 14, 28, 0.9) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 16px !important;
+        color: #dde4f0 !important;
+        font-size: 0.88rem !important;
     }
     [data-testid="stChatInput"] textarea:focus {
-        border-color: rgba(99,102,241,0.6) !important;
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.13) !important;
+        border-color: rgba(99,102,241,0.5) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
     }
 
-    /* ── Progress bar ────────────────────────────────────── */
-    [data-testid="stProgress"] > div > div > div > div {
-        background: linear-gradient(90deg,#4f46e5,#7c3aed) !important;
+    /* ─── Progress bar ──────────────────────────────────────── */
+    [data-testid="stProgress"] > div {
+        background: rgba(255,255,255,0.05) !important;
         border-radius: 99px !important;
     }
+    [data-testid="stProgress"] > div > div > div > div {
+        background: linear-gradient(90deg, #4f46e5, #a78bfa) !important;
+        border-radius: 99px !important;
+        box-shadow: 0 0 12px rgba(99,102,241,0.45) !important;
+    }
 
-    /* ── Spinner ─────────────────────────────────────────── */
-    .stSpinner > div { border-top-color: #6366f1 !important; }
+    /* ─── Spinner ───────────────────────────────────────────── */
+    .stSpinner > div {
+        border-color: rgba(99,102,241,0.12) !important;
+        border-top-color: #6366f1 !important;
+    }
 
-    /* ── Checkbox ────────────────────────────────────────── */
-    [data-testid="stCheckbox"] input:checked + span { background: #6366f1 !important; }
+    /* ─── Checkbox ──────────────────────────────────────────── */
+    [data-testid="stCheckbox"] input:checked + span {
+        background: #6366f1 !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 10px rgba(99,102,241,0.45) !important;
+    }
 
-    /* ── Radio (nav) ─────────────────────────────────────── */
+    /* ─── Radio navigation ──────────────────────────────────── */
     .stRadio > label { display: none !important; }
-    .stRadio > div { gap: 3px !important; flex-direction: column !important; display: flex !important; }
+    .stRadio > div {
+        gap: 2px !important;
+        flex-direction: column !important;
+        display: flex !important;
+    }
     .stRadio > div > label {
         background: transparent !important;
         border: 1px solid transparent !important;
-        border-radius: 9px !important;
-        padding: 9px 12px !important;
-        color: #64748b !important;
-        font-size: 0.85rem !important; font-weight: 500 !important;
-        cursor: pointer !important; transition: all 0.12s !important;
-        display: flex !important; align-items: center !important; gap: 8px !important;
+        border-radius: 10px !important;
+        padding: 9px 13px !important;
+        color: #3a4d68 !important;
+        font-size: 0.83rem !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: all 0.15s cubic-bezier(0.4,0,0.2,1) !important;
+        letter-spacing: 0.01em !important;
     }
     .stRadio > div > label:hover {
-        background: rgba(99,102,241,0.09) !important;
+        background: rgba(99,102,241,0.08) !important;
         color: #a5b4fc !important;
-        border-color: rgba(99,102,241,0.25) !important;
+        border-color: rgba(99,102,241,0.18) !important;
     }
-    .stRadio > div > label[data-checked="true"],
     .stRadio > div > label:has(input:checked) {
-        background: rgba(99,102,241,0.16) !important;
+        background: rgba(99,102,241,0.13) !important;
         color: #a5b4fc !important;
-        border-color: rgba(99,102,241,0.4) !important;
-        box-shadow: 0 0 12px rgba(99,102,241,0.12) !important;
+        border-color: rgba(99,102,241,0.32) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 20px rgba(99,102,241,0.08) !important;
     }
     .stRadio > div > label > div:first-child { display: none !important; }
-
-    /* ── Plotly chart containers ─────────────────────────── */
-    .js-plotly-plot { border-radius: 13px; overflow: hidden; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -226,92 +360,144 @@ def _inject_css():
 
 def _stat_card(label: str, value: str, sub: str = "", accent: str = "#6366f1",
                icon: str = "") -> str:
-    sub_html = f'<div style="color:{accent};font-size:0.78rem;font-weight:600;margin-top:6px;letter-spacing:0.01em">{sub}</div>' if sub else ""
-    icon_html = f'<span style="font-size:1.4rem;opacity:0.85">{icon}</span>' if icon else ""
+    sub_html = (
+        f'<div style="margin-top:8px;font-size:0.76rem;font-weight:600;'
+        f'color:{accent};letter-spacing:0.01em;opacity:0.85">{sub}</div>'
+    ) if sub else ""
+    icon_html = (
+        f'<div style="width:32px;height:32px;border-radius:9px;'
+        f'background:{accent}18;border:1px solid {accent}30;'
+        f'display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">{icon}</div>'
+    ) if icon else ""
     return f"""
     <div style="
-        background:linear-gradient(135deg,#0c1525 0%,#0f1d38 100%);
-        border:1px solid {accent}30;
-        border-radius:16px; padding:20px 22px; position:relative; overflow:hidden;
-        box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);
-        transition:border-color .2s,box-shadow .2s;
-        margin-bottom:0;
+        background:linear-gradient(145deg,#0c1526 0%,#101d38 100%);
+        border:1px solid rgba(255,255,255,0.07);
+        border-radius:20px; padding:22px 24px;
+        position:relative; overflow:hidden;
+        box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 40px rgba(0,0,0,0.55);
+        height:100%;
     ">
-      <div style="position:absolute;top:-10px;right:-10px;width:80px;height:80px;
-          background:radial-gradient(circle,{accent}25 0%,transparent 70%);pointer-events:none"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="color:#3d4f68;font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">{label}</span>
+      <div style="
+          position:absolute;top:0;left:0;right:0;height:1px;
+          background:linear-gradient(90deg,transparent,{accent}38,transparent);
+          pointer-events:none
+      "></div>
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;
+          background:radial-gradient(circle,{accent}1a 0%,transparent 65%);pointer-events:none"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+        <span style="color:#2d3e58;font-size:0.63rem;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.15em;padding-top:2px">{label}</span>
         {icon_html}
       </div>
-      <div style="color:#e2e8f0;font-size:1.9rem;font-weight:800;letter-spacing:-0.03em;line-height:1.1">{value}</div>
+      <div style="color:#f0f4ff;font-size:1.95rem;font-weight:800;letter-spacing:-0.035em;line-height:1.05">{value}</div>
       {sub_html}
     </div>"""
 
 
 def _badge(text: str, color: str = "#6366f1", bg: str = "") -> str:
-    bg = bg or f"{color}18"
+    bg = bg or f"{color}15"
     return (f'<span style="display:inline-block;background:{bg};color:{color};'
-            f'border:1px solid {color}45;border-radius:6px;padding:2px 9px;'
-            f'font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase">{text}</span>')
+            f'border:1px solid {color}40;border-radius:7px;padding:3px 10px;'
+            f'font-size:0.7rem;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;'
+            f'vertical-align:middle">{text}</span>')
+
+
+def _section_hdr(title: str, sub: str = "") -> str:
+    """Elegant section header with gradient accent line."""
+    sub_html = f'<div style="color:#3a4d68;font-size:0.75rem;font-weight:500;margin-top:2px">{sub}</div>' if sub else ""
+    return f"""
+    <div style="margin:2rem 0 1.2rem;display:flex;align-items:center;gap:14px">
+      <div style="width:3px;height:28px;border-radius:2px;
+          background:linear-gradient(180deg,#a78bfa,#6366f1);flex-shrink:0"></div>
+      <div>
+        <div style="color:#dde4f0;font-size:1rem;font-weight:700;letter-spacing:-0.02em;line-height:1.2">{title}</div>
+        {sub_html}
+      </div>
+    </div>"""
 
 
 def _medal_card(rank: int, symbol: str, name: str, price: float,
                 pct: float, score: float, sector: str) -> str:
-    medals = {1: ("#f59e0b","#78350f","🥇"), 2: ("#94a3b8","#1e293b","🥈"), 3: ("#cd7c3a","#2c1810","🥉")}
-    accent, bg_tint, icon = medals.get(rank, ("#6366f1","#1e1b4b","✦"))
-    pct_color = "#22c55e" if pct >= 0 else "#ef4444"
+    medals = {
+        1: ("#f59e0b", "rgba(120,53,15,0.35)", "🥇", "rgba(245,158,11,0.12)"),
+        2: ("#8b9eb0", "rgba(30,41,59,0.4)",   "🥈", "rgba(139,158,176,0.08)"),
+        3: ("#c97c3a", "rgba(44,24,16,0.4)",   "🥉", "rgba(201,124,58,0.1)"),
+    }
+    accent, bg_tint, icon, glow = medals.get(rank, ("#6366f1","rgba(30,27,75,0.4)","✦","rgba(99,102,241,0.1)"))
+    pct_color = "#10b981" if pct >= 0 else "#f43f5e"
     pct_sign  = "+" if pct >= 0 else ""
     return f"""
     <div style="
-        background:linear-gradient(135deg,#0c1525 0%,{bg_tint}80 100%);
-        border:1px solid {accent}50; border-radius:16px; padding:18px 20px;
-        box-shadow:0 4px 24px rgba(0,0,0,0.45),0 0 0 1px {accent}18;
-        position:relative; overflow:hidden;
+        background:linear-gradient(145deg,#0c1526 0%,{bg_tint} 100%);
+        border:1px solid rgba(255,255,255,0.08);
+        border-radius:20px; padding:20px 22px;
+        box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 40px rgba(0,0,0,0.5), 0 0 30px {glow};
+        position:relative; overflow:hidden; height:100%;
     ">
-      <div style="position:absolute;top:-15px;right:-15px;width:90px;height:90px;
-          background:radial-gradient(circle,{accent}22 0%,transparent 70%);pointer-events:none"></div>
-      <div style="font-size:1.6rem;margin-bottom:6px">{icon}</div>
-      <div style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:1.25rem;
-          font-weight:700;color:{accent};letter-spacing:0.04em">{symbol}</div>
-      <div style="color:#64748b;font-size:0.72rem;font-weight:500;margin:3px 0 10px;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">{name[:28]}</div>
-      <div style="display:flex;align-items:baseline;gap:10px">
-        <span style="color:#e2e8f0;font-size:1.4rem;font-weight:800;letter-spacing:-0.02em">${price:.2f}</span>
-        <span style="color:{pct_color};font-size:0.85rem;font-weight:700">{pct_sign}{pct:.2f}%</span>
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;
+          background:linear-gradient(90deg,transparent,{accent}40,transparent);pointer-events:none"></div>
+      <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;
+          background:radial-gradient(circle,{accent}1a 0%,transparent 65%);pointer-events:none"></div>
+      <div style="font-size:1.5rem;margin-bottom:10px;line-height:1">{icon}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;
+          color:{accent};letter-spacing:0.05em;line-height:1">{symbol}</div>
+      <div style="color:#3a4d68;font-size:0.71rem;font-weight:500;margin:5px 0 14px;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{name[:30]}</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px">
+        <span style="color:#f0f4ff;font-size:1.45rem;font-weight:800;letter-spacing:-0.025em">${price:.2f}</span>
+        <span style="color:{pct_color};font-size:0.82rem;font-weight:700">{pct_sign}{pct:.2f}%</span>
       </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-        <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden">
-          <div style="height:100%;width:{score:.0f}%;background:linear-gradient(90deg,{accent},{accent}90);border-radius:99px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:{min(score,100):.0f}%;
+              background:linear-gradient(90deg,{accent}cc,{accent});
+              border-radius:99px;box-shadow:0 0 8px {accent}80"></div>
         </div>
-        <span style="color:{accent};font-size:0.75rem;font-weight:700;letter-spacing:0.04em">{score:.0f}/100</span>
+        <span style="color:{accent};font-size:0.73rem;font-weight:700;letter-spacing:0.05em;
+            white-space:nowrap">{score:.0f}/100</span>
       </div>
-      <div style="margin-top:6px;color:#475569;font-size:0.68rem;font-weight:500">{sector}</div>
+      <div style="color:#2d3e58;font-size:0.67rem;font-weight:600;text-transform:uppercase;
+          letter-spacing:0.08em">{sector}</div>
     </div>"""
 
 
 def _chart_dark(fig, height: int = 360, colorscale: bool = False):
-    """Apply consistent dark theme to any Plotly figure."""
+    """Apply refined dark theme to any Plotly figure."""
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#64748b", family="Inter,-apple-system,sans-serif", size=11),
+        font=dict(color="#3a4d68", family="Inter,system-ui,sans-serif", size=11),
         xaxis=dict(
-            gridcolor="rgba(99,102,241,0.08)", linecolor="rgba(99,102,241,0.15)",
-            tickfont=dict(color="#475569", size=10), title_font=dict(color="#64748b"),
+            gridcolor="rgba(255,255,255,0.045)",
+            linecolor="rgba(255,255,255,0.06)",
+            tickfont=dict(color="#3a4d68", size=10),
+            title_font=dict(color="#4a5e7a", size=11),
             zeroline=False,
+            showline=False,
         ),
         yaxis=dict(
-            gridcolor="rgba(99,102,241,0.08)", linecolor="rgba(99,102,241,0.15)",
-            tickfont=dict(color="#475569", size=10), title_font=dict(color="#64748b"),
+            gridcolor="rgba(255,255,255,0.045)",
+            linecolor="rgba(255,255,255,0.06)",
+            tickfont=dict(color="#3a4d68", size=10),
+            title_font=dict(color="#4a5e7a", size=11),
             zeroline=False,
+            showline=False,
         ),
         legend=dict(
-            bgcolor="rgba(8,16,31,0.8)", bordercolor="rgba(99,102,241,0.2)",
-            borderwidth=1, font=dict(color="#94a3b8", size=11),
+            bgcolor="rgba(10,15,30,0.85)",
+            bordercolor="rgba(255,255,255,0.07)",
+            borderwidth=1,
+            font=dict(color="#94a3b8", size=11),
         ),
-        margin=dict(l=8, r=8, t=28, b=8),
+        margin=dict(l=4, r=4, t=10, b=4),
         height=height,
         coloraxis_showscale=colorscale,
+        hoverlabel=dict(
+            bgcolor="rgba(12,18,38,0.95)",
+            bordercolor="rgba(167,139,250,0.4)",
+            font=dict(color="#e2e8f0", size=12),
+        ),
     )
     return fig
 
@@ -1073,7 +1259,7 @@ def page_market_overview(df: pd.DataFrame):
     with c4:
         st.markdown(_stat_card("Unchanged", f"{unchanged:,}", "flat on the day", "#94a3b8", "◆"), unsafe_allow_html=True)
 
-    st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:1.6rem'></div>", unsafe_allow_html=True)
 
     sec_df = df[df["Sector"] != "Unknown"]
     sec_breadth = (
@@ -1087,53 +1273,80 @@ def page_market_overview(df: pd.DataFrame):
         .sort_values("Avg % Change", ascending=False)
     )
 
+    # Both charts horizontal → no rotated labels, consistent layout
+    st.markdown(_section_hdr("Sector Performance"), unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("#### Sector Breadth")
-        fig = px.bar(
-            sec_breadth.melt(id_vars="Sector", value_vars=["Gainers","Losers"]),
-            x="Sector", y="value", color="variable", barmode="group",
-            color_discrete_map={"Gainers":"#22c55e","Losers":"#ef4444"},
+        # Gainers vs Losers as stacked horizontal bars (% of sector)
+        sb = sec_breadth.copy()
+        sb["Total"] = sb["Gainers"] + sb["Losers"]
+        sb["% Gainers"] = sb["Gainers"] / sb["Total"] * 100
+        sb["% Losers"]  = sb["Losers"]  / sb["Total"] * 100
+        sb_sorted = sb.sort_values("% Gainers", ascending=True)
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            y=sb_sorted["Sector"], x=sb_sorted["% Gainers"],
+            name="Gainers", orientation="h",
+            marker=dict(color="rgba(16,185,129,0.75)", line=dict(width=0)),
+        ))
+        fig.add_trace(go.Bar(
+            y=sb_sorted["Sector"], x=sb_sorted["% Losers"],
+            name="Losers", orientation="h",
+            marker=dict(color="rgba(244,63,94,0.65)", line=dict(width=0)),
+        ))
+        fig.update_layout(
+            barmode="stack", bargap=0.22,
+            xaxis=dict(ticksuffix="%", range=[0, 100]),
+            legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="right", x=1),
         )
-        fig.update_layout(xaxis_tickangle=-40, legend_title="", bargap=0.2)
-        st.plotly_chart(_chart_dark(fig, 360), use_container_width=True)
-    with c2:
-        st.markdown("#### Avg % Change by Sector")
-        fig2 = px.bar(
-            sec_breadth.sort_values("Avg % Change"),
-            x="Avg % Change", y="Sector", orientation="h",
-            color="Avg % Change", color_continuous_scale="RdYlGn",
-        )
-        st.plotly_chart(_chart_dark(fig2, 360, colorscale=False), use_container_width=True)
+        st.plotly_chart(_chart_dark(fig, 380), use_container_width=True)
 
-    st.markdown("#### % Change Distribution")
+    with c2:
+        # Average % change — horizontal, colored by value
+        sb2 = sec_breadth.sort_values("Avg % Change", ascending=True)
+        colors = ["rgba(244,63,94,0.8)" if v < 0 else "rgba(16,185,129,0.8)"
+                  for v in sb2["Avg % Change"]]
+        fig2 = go.Figure(go.Bar(
+            y=sb2["Sector"], x=sb2["Avg % Change"],
+            orientation="h",
+            marker=dict(color=colors, line=dict(width=0)),
+            text=[f"{v:+.2f}%" for v in sb2["Avg % Change"]],
+            textposition="outside",
+            textfont=dict(color="#4a5e7a", size=10),
+        ))
+        fig2.add_vline(x=0, line_color="rgba(255,255,255,0.1)", line_width=1)
+        st.plotly_chart(_chart_dark(fig2, 380), use_container_width=True)
+
+    st.markdown(_section_hdr("Return Distribution", f"{len(df):,} stocks · clipped ±20%"), unsafe_allow_html=True)
     fig3 = px.histogram(
         df[(df["% Change"] > -20) & (df["% Change"] < 20)],
-        x="% Change", nbins=80, color_discrete_sequence=["#6366f1"],
+        x="% Change", nbins=80,
+        color_discrete_sequence=["rgba(99,102,241,0.7)"],
     )
-    fig3.add_vline(x=0, line_dash="dash", line_color="rgba(255,255,255,0.25)", line_width=1.5)
-    fig3.update_traces(marker_line_width=0, opacity=0.85)
-    st.plotly_chart(_chart_dark(fig3, 240), use_container_width=True)
+    fig3.add_vline(x=0, line_dash="dot", line_color="rgba(255,255,255,0.2)", line_width=1)
+    fig3.update_traces(marker_line_width=0)
+    st.plotly_chart(_chart_dark(fig3, 220), use_container_width=True)
 
+    st.markdown(_section_hdr("Movers Today", "$50M+ cap · 50K+ volume"), unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     qualified = df[(df["Market Cap"] >= 50e6) & (df["Volume"] >= 50_000)]
     with c1:
-        st.markdown("#### 🟢 Top 10 Gainers")
+        st.markdown('<div style="color:#10b981;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">▲ Top 10 Gainers</div>', unsafe_allow_html=True)
         top_g = qualified.nlargest(10, "% Change")
         st.dataframe(
             top_g[["Symbol","Name","Last Sale","% Change","Volume"]].style
             .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
-            .applymap(lambda v: "color:#22c55e;font-weight:700" if isinstance(v, str) and "+" in v else "", subset=["% Change"]),
-            use_container_width=True, height=330,
+            .applymap(lambda v: "color:#10b981;font-weight:700" if isinstance(v, (int,float)) and v > 0 else "", subset=["% Change"]),
+            use_container_width=True, height=340,
         )
     with c2:
-        st.markdown("#### 🔴 Top 10 Losers")
+        st.markdown('<div style="color:#f43f5e;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">▼ Top 10 Losers</div>', unsafe_allow_html=True)
         top_l = qualified.nsmallest(10, "% Change")
         st.dataframe(
             top_l[["Symbol","Name","Last Sale","% Change","Volume"]].style
             .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
-            .applymap(lambda v: "color:#ef4444;font-weight:700" if isinstance(v, (int, float)) and v < 0 else "", subset=["% Change"]),
-            use_container_width=True, height=330,
+            .applymap(lambda v: "color:#f43f5e;font-weight:700" if isinstance(v, (int,float)) and v < 0 else "", subset=["% Change"]),
+            use_container_width=True, height=340,
         )
 
 
