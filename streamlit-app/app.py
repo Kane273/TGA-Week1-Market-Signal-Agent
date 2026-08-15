@@ -463,7 +463,10 @@ def _most_active(df: pd.DataFrame, n: int = 10) -> str:
     return f"**Top {n} Most Active (by Volume)**\n\n{lines}"
 
 
-def agent_respond(user_msg: str, df: pd.DataFrame) -> str:
+DISCLAIMER = "\n\n---\n*All information provided is for informational purposes only and does not constitute financial advice. Always do your own research and consult a licensed financial advisor before making investment decisions.*"
+
+
+def _agent_respond_inner(user_msg: str, df: pd.DataFrame) -> str:
     msg = user_msg.strip()
     msg_lower = msg.lower()
 
@@ -580,7 +583,12 @@ def agent_respond(user_msg: str, df: pd.DataFrame) -> str:
             "- **Compare**: `AAPL vs MSFT`\n"
             "- **Education**: `RSI`, `MACD`, `moving average`, `momentum`, `short squeeze`, "
             "`market cap`, `PE ratio`, `breakout`, `earnings`, `stop loss`, `diversification`, "
-            "`sector rotation`, `yfinance`")
+            "`sector rotation`, `yfinance`"
+            )
+
+
+def agent_respond(user_msg: str, df: pd.DataFrame) -> str:
+    return _agent_respond_inner(user_msg, df) + DISCLAIMER
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
