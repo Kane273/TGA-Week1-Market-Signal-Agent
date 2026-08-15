@@ -419,8 +419,8 @@ def _sector_analysis(sector: str, df: pd.DataFrame) -> str:
                  "Neutral/mixed" if avg_pct > -0.2 else "Mildly bearish" if avg_pct > -2 else "Strongly bearish")
     top5 = sec_df.nlargest(5, "% Change")
     lines = "\n".join(
-        f"  {i+1}. **{r.Symbol}** — {r.Name[:30]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}%"
-        for i, r in enumerate(top5.itertuples())
+        f"  {i+1}. **{r['Symbol']}** — {r['Name'][:30]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}%"
+        for i, (_, r) in enumerate(top5.iterrows())
     )
     return (f"**Sector: {sector}**\n\n"
             f"- Stocks: {total} | Gainers: {gainers} ({gainers/total*100:.0f}%)\n"
@@ -433,8 +433,8 @@ def _top_picks_summary(df: pd.DataFrame) -> str:
         df[(df["Market Cap"] >= 100e6) & (df["Volume"] >= 100_000) & (df["Last Sale"] >= 1.0)]
     ).nlargest(10, "score")
     lines = "\n".join(
-        f"  {i+1}. **{r.Symbol}** — {r.Name[:30]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}% | Score: {r.score:.0f}/100"
-        for i, r in enumerate(scored.itertuples())
+        f"  {i+1}. **{r['Symbol']}** — {r['Name'][:30]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}% | Score: {r['score']:.0f}/100"
+        for i, (_, r) in enumerate(scored.iterrows())
     )
     return (f"**Top 10 High-Gain Candidates (CSV scoring)**\n\n{lines}\n\n"
             "Go to the **Top Picks** page and enable *Fetch Live Data* to add RSI, analyst targets, and MA signals.")
@@ -445,8 +445,8 @@ def _gainers_losers(df: pd.DataFrame, mode: str = "gainers", n: int = 10) -> str
     top = f.nlargest(n, "% Change") if mode == "gainers" else f.nsmallest(n, "% Change")
     header = f"**Top {n} {'Gainers' if mode == 'gainers' else 'Losers'} Today**"
     lines = "\n".join(
-        f"  {i+1}. **{r.Symbol}** | {r.Name[:28]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}%"
-        for i, r in enumerate(top.itertuples())
+        f"  {i+1}. **{r['Symbol']}** | {r['Name'][:28]} | ${r['Last Sale']:.2f} | {r['% Change']:+.2f}%"
+        for i, (_, r) in enumerate(top.iterrows())
     )
     return f"{header}\n\n{lines}\n\n*(Filtered: $50M+ market cap, 50K+ volume)*"
 
@@ -454,8 +454,8 @@ def _gainers_losers(df: pd.DataFrame, mode: str = "gainers", n: int = 10) -> str
 def _most_active(df: pd.DataFrame, n: int = 10) -> str:
     top = df.nlargest(n, "Volume")
     lines = "\n".join(
-        f"  {i+1}. **{r.Symbol}** | {r.Name[:28]} | ${r['Last Sale']:.2f} | Vol: {r['Volume']:,.0f} | {r['% Change']:+.2f}%"
-        for i, r in enumerate(top.itertuples())
+        f"  {i+1}. **{r['Symbol']}** | {r['Name'][:28]} | ${r['Last Sale']:.2f} | Vol: {r['Volume']:,.0f} | {r['% Change']:+.2f}%"
+        for i, (_, r) in enumerate(top.iterrows())
     )
     return f"**Top {n} Most Active (by Volume)**\n\n{lines}"
 
