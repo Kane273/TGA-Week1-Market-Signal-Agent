@@ -196,12 +196,12 @@ KNOWLEDGE_BASE = {
 
 RSI measures price momentum on a 0–100 scale:
 
-- **Below 30** — Oversold. Price dropped sharply; potential bounce incoming. Possible buy signal.
-- **30–50** — Recovering. Selling pressure easing; watch for reversal.
-- **50–70** — Healthy bullish range. Positive momentum without excess.
-- **Above 70** — Overbought. Price ran up fast; pullback or consolidation likely.
+- **Below 30** — Oversold territory. Price has dropped sharply; some traders watch this level as a potential reversal zone.
+- **30–50** — Recovering range. Downward pressure may be easing.
+- **50–70** — Healthy momentum range. Positive trend without being stretched.
+- **Above 70** — Overbought territory. Price has risen quickly; a pullback or consolidation is common.
 
-*How traders use it:* Buy when RSI crosses back above 30 (oversold bounce). Tighten stops when RSI crosses below 70. Works best combined with trend context — don't buy an oversold stock in a strong downtrend.
+*How it is used:* RSI crossing back above 30 is often watched as a potential stabilization signal. RSI crossing below 70 from above may indicate momentum is fading. Works best combined with broader trend context.
 
 The **Top Picks** page uses CSV data for initial screening. The **Stock Detail** page fetches live RSI via yfinance.""",
 
@@ -210,12 +210,12 @@ The **Top Picks** page uses CSV data for initial screening. The **Stock Detail**
 Tracks momentum via two exponential moving averages (12-day and 26-day EMA), with a 9-day signal line on top.
 
 Key signals:
-- **Bullish crossover**: MACD line crosses above signal line — buy signal
-- **Bearish crossover**: MACD line crosses below signal line — sell signal
-- **Zero-line cross**: MACD crossing above zero confirms broad uptrend
-- **Histogram**: Widening = strengthening trend; narrowing = weakening
+- **Bullish crossover**: MACD line crosses above signal line — often viewed as a positive momentum indicator
+- **Bearish crossover**: MACD line crosses below signal line — often viewed as a negative momentum indicator
+- **Zero-line cross**: MACD crossing above zero may indicate a broader uptrend is forming
+- **Histogram**: Widening = strengthening trend; narrowing = weakening momentum
 
-Best used to confirm trend direction and spot momentum shifts. Lagging by nature — not ideal for pinpoint entries.""",
+Best used to observe trend direction and momentum shifts. Lagging by nature — most useful for confirming existing trends rather than predicting new ones.""",
 
     "moving average": """**Moving Averages (MA)**
 
@@ -234,14 +234,14 @@ Live MA20 and MA50 are shown in the **Stock Detail** page chart.""",
 
     "volume": """**Volume Analysis**
 
-Volume = number of shares traded. It confirms or denies price moves.
+Volume = number of shares traded. It is commonly used to assess the strength behind price moves.
 
-- **High volume + rising price** — Strong bullish signal. Institutions are buying.
-- **High volume + falling price** — Strong selling pressure. Exit or wait.
-- **Low volume + rising price** — Weak rally. Lacks conviction.
-- **Volume spike** — Signals a potential turning point.
+- **High volume + rising price** — Often interpreted as a sign of strong interest, potentially institutional activity.
+- **High volume + falling price** — May indicate broad selling pressure.
+- **Low volume + rising price** — Some analysts view this as a less convincing move.
+- **Volume spike** — Can signal increased market attention; direction matters.
 
-For high-gain picks: look for stocks where volume is 2–3x the average alongside a price breakout. Volume is the fuel; price is the fire.""",
+Volume is generally considered alongside price to give context to how significant a move may be.""",
 
     "market cap": """**Market Capitalization**
 
@@ -256,16 +256,16 @@ The **Top Picks** scoring favors mid-cap stocks ($100M–$2B) as the sweet spot 
 
     "momentum": """**Momentum Investing**
 
-Stocks rising tend to continue rising. Key signals:
+Momentum is the tendency for stocks that have been rising to continue rising over a period of time. Key observations:
 
-- High % change vs. peers and index
-- Breaking to new 52-week highs
-- Relative strength vs. its sector
+- High % change relative to peers and the broader index
+- Price near or at new 52-week highs
+- Relative strength compared to its sector
 
-Strategies:
-- Buy top 20% of performers over 1–6 months
-- Avoid stocks in clear downtrends even if "cheap"
-- Always use stop-losses — momentum can reverse fast""",
+How momentum is generally studied:
+- Stocks in the top 20% of price performance over 1–6 months are commonly tracked by momentum strategies
+- Stocks in established downtrends may not fit a momentum-based framework
+- Momentum can reverse quickly, so risk management is considered an important part of any strategy""",
 
     "short squeeze": """**Short Squeeze**
 
@@ -305,40 +305,37 @@ Always compare P/E within the same sector. 40x P/E is normal for tech but expens
 
     "breakout": """**Breakout Trading**
 
-A breakout occurs when price moves above a key resistance level with increased volume.
+A breakout occurs when price moves above a key resistance level, often accompanied by increased volume.
 
-What to look for:
-- Price consolidating sideways for weeks
-- A resistance level tested multiple times
-- Price closes above resistance on 2x+ average volume
+What traders commonly observe:
+- Price consolidating sideways for an extended period
+- A resistance level that has been tested multiple times
+- Price closing above resistance on above-average volume (often 2x+)
 
-Entry: Buy the breakout day or retest of the broken level.
-Stop-loss: Just below the broken resistance (now support).
-
-False breakouts are common — always wait for a daily close above the level.""",
+Some traders watch for a move on the breakout day or a retest of the broken level. False breakouts are common — many analysts wait for a confirmed daily close above the level before drawing conclusions.""",
 
     "earnings": """**Earnings and Stock Price**
 
-Quarterly earnings reports are the biggest scheduled catalyst for individual stocks.
+Quarterly earnings reports are among the most significant scheduled events for individual stocks.
 
-- **Beat + raise guidance** — Strong surge (5–20%+)
-- **Miss or lower guidance** — Sharp drop (5–15%+)
-- **In-line** — Muted reaction; focus on guidance language
+- **Beat + raise guidance** — Historically associated with strong price increases (5–20%+)
+- **Miss or lower guidance** — Historically associated with sharp price declines (5–15%+)
+- **In-line results** — Often a muted reaction; the language around future guidance tends to matter most
 
-"Buy the rumor, sell the news": Stocks often rise into earnings, then drop even on a beat if expectations were priced in.
+A commonly observed pattern: stocks may rise ahead of an earnings report and then decline even after a positive result, if the outcome was already reflected in the price beforehand.
 
-Strategy: Look for stocks that beat estimates 3+ consecutive quarters — they tend to trend higher.""",
+Stocks that have beaten analyst estimates for several consecutive quarters are sometimes studied for trend consistency, though past results do not predict future performance.""",
 
     "stop loss": """**Stop-Loss Orders**
 
-An order to automatically sell if price falls to a set level, limiting your loss.
+A stop-loss is an order that automatically exits a position if price falls to a specified level, capping the potential loss on a trade.
 
-Common strategies:
-- **Percentage stop**: Sell if stock drops 7–10% below buy price
-- **Technical stop**: Sell if price closes below a key support or moving average
-- **Trailing stop**: Stop moves up with the stock, locking in gains
+Common approaches:
+- **Percentage-based**: Exits if the stock drops a set percentage from the entry price (commonly 7–10% in growth-stock frameworks)
+- **Technical**: Exits if price closes below a key support level or moving average
+- **Trailing**: The exit level moves up as price rises, preserving a portion of any gains
 
-Mental stops don't work. Set real orders. The hardest part of trading is cutting a small loss before it becomes a large one.""",
+Stop-loss orders are a risk management tool. How and whether to use them depends on individual strategy, time horizon, and risk tolerance.""",
 
     "diversification": """**Diversification**
 
@@ -373,10 +370,10 @@ def _stock_analysis_csv(symbol: str, df: pd.DataFrame) -> str:
     score = float(scored["score"].iloc[0])
     price, pct, vol, mcap = row["Last Sale"], row["% Change"], row["Volume"], row["Market Cap"]
 
-    momentum_txt = ("Strong positive momentum — significant gain today" if pct > 5 else
-                    "Mild positive momentum" if pct > 0 else
-                    "Negative momentum — down today" if pct > -5 else
-                    "Heavy selling pressure — significant decline today")
+    momentum_txt = ("Significant positive price movement today" if pct > 5 else
+                    "Mild positive price movement today" if pct > 0 else
+                    "Mild negative price movement today" if pct > -5 else
+                    "Significant negative price movement today")
     vol_txt = ("Very high liquidity" if vol > 1_000_000 else
                "Good liquidity" if vol > 200_000 else
                "Lower liquidity — use limit orders" if vol > 50_000 else
@@ -385,10 +382,10 @@ def _stock_analysis_csv(symbol: str, df: pd.DataFrame) -> str:
                "Mid-cap — solid growth profile" if mcap > 2e9 else
                "Small-cap — higher growth potential, higher volatility" if mcap > 300e6 else
                "Micro-cap — maximum volatility, high risk/reward")
-    score_txt = ("Strong candidate for high-gain potential" if score >= 70 else
-                 "Above-average on high-gain metrics" if score >= 55 else
-                 "Average — no standout signals" if score >= 40 else
-                 "Below average — weak momentum and volume")
+    score_txt = ("Scores highly on momentum, volume, and market-cap metrics" if score >= 70 else
+                 "Above average across screening metrics" if score >= 55 else
+                 "Average across screening metrics" if score >= 40 else
+                 "Below average across screening metrics")
 
     ipo = row.get("IPO Year")
     ipo_txt = f"\n- **IPO Year**: {int(ipo)}" if ipo and not np.isnan(float(ipo)) else ""
@@ -528,7 +525,7 @@ def _agent_respond_inner(user_msg: str, df: pd.DataFrame) -> str:
                 winner = max(results, key=lambda r: r["score"])
                 return "**Comparison**\n\n" + "\n".join(lines) + f"\n\n**Best by score**: {winner['Symbol']}"
 
-    if re.search(r"\b(top pick|best stock|high gain|high.potential|recommend|strong buy|what.*(should|to) buy)\b", msg_lower):
+    if re.search(r"\b(top pick|best stock|high gain|high.potential|highest score|highest scoring)\b", msg_lower):
         return _top_picks_summary(df)
 
     if re.search(r"\b(top gainer|biggest gainer|most gained|up the most|rising|best performer)\b", msg_lower):
