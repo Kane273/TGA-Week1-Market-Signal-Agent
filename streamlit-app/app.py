@@ -22,10 +22,298 @@ warnings.filterwarnings("ignore")
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Stock Analyzer & AI Agent",
-    page_icon="📈",
+    page_title="NASDAQ Terminal",
+    page_icon="⚡",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
+
+# ── Theme & CSS ───────────────────────────────────────────────────────────────
+
+def _inject_css():
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    /* ── Foundation ─────────────────────────────────────── */
+    html, body, .stApp {
+        background: #060b18 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+    .stApp > header { background: transparent !important; }
+    .block-container { padding-top: 1.6rem !important; padding-bottom: 2rem !important; }
+
+    /* ── Sidebar ─────────────────────────────────────────── */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #08101f 0%, #060b18 100%) !important;
+        border-right: 1px solid rgba(99,102,241,0.18) !important;
+    }
+    section[data-testid="stSidebar"] .block-container { padding-top: 0.5rem !important; }
+
+    /* ── Typography ──────────────────────────────────────── */
+    h1 {
+        background: linear-gradient(130deg, #e2e8f0 0%, #a5b4fc 55%, #818cf8 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        font-weight: 900 !important;
+        letter-spacing: -0.04em !important;
+        line-height: 1.1 !important;
+        margin-bottom: 0.15rem !important;
+    }
+    h2 { color: #cbd5e1 !important; font-weight: 700 !important; letter-spacing: -0.025em !important; }
+    h3 { color: #94a3b8 !important; font-weight: 600 !important; letter-spacing: -0.015em !important; }
+    p, li { color: #94a3b8; }
+    .stCaption, small { color: #475569 !important; font-size: 0.75rem !important; }
+    hr { border-color: rgba(99,102,241,0.13) !important; margin: 1.2rem 0 !important; }
+
+    /* ── Metric cards ────────────────────────────────────── */
+    [data-testid="metric-container"] {
+        background: linear-gradient(135deg, #0c1525 0%, #0f1d38 100%) !important;
+        border: 1px solid rgba(99,102,241,0.22) !important;
+        border-radius: 16px !important;
+        padding: 20px 22px !important;
+        box-shadow: 0 4px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    [data-testid="metric-container"]:hover {
+        border-color: rgba(99,102,241,0.42) !important;
+        box-shadow: 0 6px 34px rgba(0,0,0,0.55), 0 0 0 1px rgba(99,102,241,0.15) !important;
+    }
+    [data-testid="stMetricLabel"] > div {
+        font-size: 0.67rem !important; font-weight: 700 !important;
+        text-transform: uppercase !important; letter-spacing: 0.12em !important;
+        color: #3d4f68 !important;
+    }
+    [data-testid="stMetricValue"] > div {
+        font-size: 1.85rem !important; font-weight: 800 !important;
+        color: #e2e8f0 !important; letter-spacing: -0.03em !important;
+        line-height: 1.15 !important;
+    }
+    [data-testid="stMetricDelta"] > div {
+        font-size: 0.78rem !important; font-weight: 600 !important; letter-spacing: 0.01em !important;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .stButton > button {
+        background: rgba(8,16,31,0.75) !important;
+        color: #64748b !important;
+        border: 1px solid rgba(99,102,241,0.16) !important;
+        border-radius: 10px !important;
+        font-size: 0.78rem !important; font-weight: 500 !important;
+        transition: all 0.15s ease !important;
+        text-align: left !important; letter-spacing: 0.01em !important;
+        padding: 7px 12px !important;
+    }
+    .stButton > button:hover {
+        background: rgba(99,102,241,0.11) !important;
+        color: #c7d2fe !important;
+        border-color: rgba(99,102,241,0.42) !important;
+        box-shadow: 0 0 16px rgba(99,102,241,0.18) !important;
+        transform: translateX(3px) !important;
+    }
+    [data-testid="baseButton-primary"] {
+        background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%) !important;
+        color: #fff !important; border: none !important;
+        font-weight: 700 !important; letter-spacing: 0.02em !important;
+        box-shadow: 0 4px 18px rgba(99,102,241,0.38) !important;
+        padding: 10px 20px !important; text-align: center !important;
+    }
+    [data-testid="baseButton-primary"]:hover {
+        box-shadow: 0 6px 28px rgba(99,102,241,0.55) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* ── Select / inputs ─────────────────────────────────── */
+    .stSelectbox > div > div,
+    .stNumberInput > div > div > input,
+    .stTextInput > div > div > input {
+        background: rgba(8,13,28,0.9) !important;
+        border: 1px solid rgba(99,102,241,0.2) !important;
+        border-radius: 9px !important;
+        color: #e2e8f0 !important;
+        font-size: 0.85rem !important;
+    }
+    .stSlider [data-baseweb="slider"] [role="slider"] { background: #6366f1 !important; }
+    .stSlider [data-baseweb="slider"] [data-testid="stSliderTrackFill"] { background: #6366f1 !important; }
+
+    /* ── Expander ────────────────────────────────────────── */
+    details > summary {
+        background: rgba(8,16,31,0.75) !important;
+        border: 1px solid rgba(99,102,241,0.18) !important;
+        border-radius: 11px !important;
+        color: #94a3b8 !important;
+        padding: 10px 16px !important;
+        font-weight: 600 !important; font-size: 0.85rem !important;
+    }
+    details[open] > summary { border-radius: 11px 11px 0 0 !important; }
+
+    /* ── Alert boxes ─────────────────────────────────────── */
+    [data-testid="stAlert"] {
+        border-radius: 11px !important; border-left-width: 3px !important;
+        background: rgba(8,16,31,0.7) !important;
+    }
+
+    /* ── DataFrames ──────────────────────────────────────── */
+    .stDataFrame, [data-testid="stDataFrameResizable"] {
+        border-radius: 13px !important; overflow: hidden !important;
+        border: 1px solid rgba(99,102,241,0.14) !important;
+    }
+
+    /* ── Chat ────────────────────────────────────────────── */
+    [data-testid="stChatMessage"] {
+        background: rgba(8,16,31,0.55) !important;
+        border: 1px solid rgba(99,102,241,0.11) !important;
+        border-radius: 14px !important;
+        margin: 5px 0 !important;
+    }
+    [data-testid="stChatInput"] textarea {
+        background: rgba(8,16,31,0.92) !important;
+        border: 1px solid rgba(99,102,241,0.28) !important;
+        border-radius: 14px !important;
+        color: #e2e8f0 !important; font-size: 0.88rem !important;
+    }
+    [data-testid="stChatInput"] textarea:focus {
+        border-color: rgba(99,102,241,0.6) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.13) !important;
+    }
+
+    /* ── Progress bar ────────────────────────────────────── */
+    [data-testid="stProgress"] > div > div > div > div {
+        background: linear-gradient(90deg,#4f46e5,#7c3aed) !important;
+        border-radius: 99px !important;
+    }
+
+    /* ── Spinner ─────────────────────────────────────────── */
+    .stSpinner > div { border-top-color: #6366f1 !important; }
+
+    /* ── Checkbox ────────────────────────────────────────── */
+    [data-testid="stCheckbox"] input:checked + span { background: #6366f1 !important; }
+
+    /* ── Radio (nav) ─────────────────────────────────────── */
+    .stRadio > label { display: none !important; }
+    .stRadio > div { gap: 3px !important; flex-direction: column !important; display: flex !important; }
+    .stRadio > div > label {
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 9px !important;
+        padding: 9px 12px !important;
+        color: #64748b !important;
+        font-size: 0.85rem !important; font-weight: 500 !important;
+        cursor: pointer !important; transition: all 0.12s !important;
+        display: flex !important; align-items: center !important; gap: 8px !important;
+    }
+    .stRadio > div > label:hover {
+        background: rgba(99,102,241,0.09) !important;
+        color: #a5b4fc !important;
+        border-color: rgba(99,102,241,0.25) !important;
+    }
+    .stRadio > div > label[data-checked="true"],
+    .stRadio > div > label:has(input:checked) {
+        background: rgba(99,102,241,0.16) !important;
+        color: #a5b4fc !important;
+        border-color: rgba(99,102,241,0.4) !important;
+        box-shadow: 0 0 12px rgba(99,102,241,0.12) !important;
+    }
+    .stRadio > div > label > div:first-child { display: none !important; }
+
+    /* ── Plotly chart containers ─────────────────────────── */
+    .js-plotly-plot { border-radius: 13px; overflow: hidden; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# ── UI helper components ──────────────────────────────────────────────────────
+
+def _stat_card(label: str, value: str, sub: str = "", accent: str = "#6366f1",
+               icon: str = "") -> str:
+    sub_html = f'<div style="color:{accent};font-size:0.78rem;font-weight:600;margin-top:6px;letter-spacing:0.01em">{sub}</div>' if sub else ""
+    icon_html = f'<span style="font-size:1.4rem;opacity:0.85">{icon}</span>' if icon else ""
+    return f"""
+    <div style="
+        background:linear-gradient(135deg,#0c1525 0%,#0f1d38 100%);
+        border:1px solid {accent}30;
+        border-radius:16px; padding:20px 22px; position:relative; overflow:hidden;
+        box-shadow:0 4px 28px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);
+        transition:border-color .2s,box-shadow .2s;
+        margin-bottom:0;
+    ">
+      <div style="position:absolute;top:-10px;right:-10px;width:80px;height:80px;
+          background:radial-gradient(circle,{accent}25 0%,transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="color:#3d4f68;font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em">{label}</span>
+        {icon_html}
+      </div>
+      <div style="color:#e2e8f0;font-size:1.9rem;font-weight:800;letter-spacing:-0.03em;line-height:1.1">{value}</div>
+      {sub_html}
+    </div>"""
+
+
+def _badge(text: str, color: str = "#6366f1", bg: str = "") -> str:
+    bg = bg or f"{color}18"
+    return (f'<span style="display:inline-block;background:{bg};color:{color};'
+            f'border:1px solid {color}45;border-radius:6px;padding:2px 9px;'
+            f'font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase">{text}</span>')
+
+
+def _medal_card(rank: int, symbol: str, name: str, price: float,
+                pct: float, score: float, sector: str) -> str:
+    medals = {1: ("#f59e0b","#78350f","🥇"), 2: ("#94a3b8","#1e293b","🥈"), 3: ("#cd7c3a","#2c1810","🥉")}
+    accent, bg_tint, icon = medals.get(rank, ("#6366f1","#1e1b4b","✦"))
+    pct_color = "#22c55e" if pct >= 0 else "#ef4444"
+    pct_sign  = "+" if pct >= 0 else ""
+    return f"""
+    <div style="
+        background:linear-gradient(135deg,#0c1525 0%,{bg_tint}80 100%);
+        border:1px solid {accent}50; border-radius:16px; padding:18px 20px;
+        box-shadow:0 4px 24px rgba(0,0,0,0.45),0 0 0 1px {accent}18;
+        position:relative; overflow:hidden;
+    ">
+      <div style="position:absolute;top:-15px;right:-15px;width:90px;height:90px;
+          background:radial-gradient(circle,{accent}22 0%,transparent 70%);pointer-events:none"></div>
+      <div style="font-size:1.6rem;margin-bottom:6px">{icon}</div>
+      <div style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:1.25rem;
+          font-weight:700;color:{accent};letter-spacing:0.04em">{symbol}</div>
+      <div style="color:#64748b;font-size:0.72rem;font-weight:500;margin:3px 0 10px;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">{name[:28]}</div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span style="color:#e2e8f0;font-size:1.4rem;font-weight:800;letter-spacing:-0.02em">${price:.2f}</span>
+        <span style="color:{pct_color};font-size:0.85rem;font-weight:700">{pct_sign}{pct:.2f}%</span>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:{score:.0f}%;background:linear-gradient(90deg,{accent},{accent}90);border-radius:99px"></div>
+        </div>
+        <span style="color:{accent};font-size:0.75rem;font-weight:700;letter-spacing:0.04em">{score:.0f}/100</span>
+      </div>
+      <div style="margin-top:6px;color:#475569;font-size:0.68rem;font-weight:500">{sector}</div>
+    </div>"""
+
+
+def _chart_dark(fig, height: int = 360, colorscale: bool = False):
+    """Apply consistent dark theme to any Plotly figure."""
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#64748b", family="Inter,-apple-system,sans-serif", size=11),
+        xaxis=dict(
+            gridcolor="rgba(99,102,241,0.08)", linecolor="rgba(99,102,241,0.15)",
+            tickfont=dict(color="#475569", size=10), title_font=dict(color="#64748b"),
+            zeroline=False,
+        ),
+        yaxis=dict(
+            gridcolor="rgba(99,102,241,0.08)", linecolor="rgba(99,102,241,0.15)",
+            tickfont=dict(color="#475569", size=10), title_font=dict(color="#64748b"),
+            zeroline=False,
+        ),
+        legend=dict(
+            bgcolor="rgba(8,16,31,0.8)", bordercolor="rgba(99,102,241,0.2)",
+            borderwidth=1, font=dict(color="#94a3b8", size=11),
+        ),
+        margin=dict(l=8, r=8, t=28, b=8),
+        height=height,
+        coloraxis_showscale=colorscale,
+    )
+    return fig
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "nasdaq_screener.csv")
 
@@ -750,26 +1038,49 @@ def _agent_respond_inner_fallback(user_msg: str, df: pd.DataFrame) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def page_market_overview(df: pd.DataFrame):
-    st.title("🌐 Market Overview")
-    st.caption("NASDAQ market breadth and sector performance from screener data")
-
+    st.title("Market Overview")
     total = len(df)
     gainers = int((df["% Change"] > 0).sum())
-    losers = int((df["% Change"] < 0).sum())
+    losers  = int((df["% Change"] < 0).sum())
+    unchanged = total - gainers - losers
+    avg_chg = df["% Change"].mean()
 
+    # Sentiment pill
+    if avg_chg > 0.5:
+        sent, scol = "BULLISH", "#22c55e"
+    elif avg_chg > -0.5:
+        sent, scol = "NEUTRAL", "#f59e0b"
+    else:
+        sent, scol = "BEARISH", "#ef4444"
+
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem">'
+        f'<span style="color:#475569;font-size:0.8rem">NASDAQ Screener Snapshot · {total:,} stocks</span>'
+        f'&nbsp;{_badge(f"⬤  {sent}", scol)}'
+        f'&nbsp;<span style="color:{scol};font-size:0.8rem;font-weight:600">Avg {avg_chg:+.2f}%</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Hero stat cards
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Stocks", f"{total:,}")
-    c2.metric("Gainers 🟢", f"{gainers:,}", f"{gainers/total*100:.1f}%")
-    c3.metric("Losers 🔴", f"{losers:,}", f"-{losers/total*100:.1f}%")
-    c4.metric("Unchanged ⚪", f"{total-gainers-losers:,}")
+    with c1:
+        st.markdown(_stat_card("Total Stocks", f"{total:,}", "in NASDAQ dataset", "#6366f1", "📋"), unsafe_allow_html=True)
+    with c2:
+        st.markdown(_stat_card("Gainers", f"{gainers:,}", f"{gainers/total*100:.1f}% of market", "#22c55e", "▲"), unsafe_allow_html=True)
+    with c3:
+        st.markdown(_stat_card("Losers", f"{losers:,}", f"{losers/total*100:.1f}% of market", "#ef4444", "▼"), unsafe_allow_html=True)
+    with c4:
+        st.markdown(_stat_card("Unchanged", f"{unchanged:,}", "flat on the day", "#94a3b8", "◆"), unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
+
     sec_df = df[df["Sector"] != "Unknown"]
     sec_breadth = (
         sec_df.groupby("Sector")
         .apply(lambda g: pd.Series({
             "Gainers": int((g["% Change"] > 0).sum()),
-            "Losers": int((g["% Change"] < 0).sum()),
+            "Losers":  int((g["% Change"] < 0).sum()),
             "Avg % Change": g["% Change"].mean(),
         }))
         .reset_index()
@@ -778,48 +1089,59 @@ def page_market_overview(df: pd.DataFrame):
 
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Sector Breadth")
-        fig = px.bar(sec_breadth.melt(id_vars="Sector", value_vars=["Gainers", "Losers"]),
-                     x="Sector", y="value", color="variable", barmode="group",
-                     color_discrete_map={"Gainers": "#22c55e", "Losers": "#ef4444"})
-        fig.update_layout(height=360, xaxis_tickangle=-40, legend_title="")
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("#### Sector Breadth")
+        fig = px.bar(
+            sec_breadth.melt(id_vars="Sector", value_vars=["Gainers","Losers"]),
+            x="Sector", y="value", color="variable", barmode="group",
+            color_discrete_map={"Gainers":"#22c55e","Losers":"#ef4444"},
+        )
+        fig.update_layout(xaxis_tickangle=-40, legend_title="", bargap=0.2)
+        st.plotly_chart(_chart_dark(fig, 360), use_container_width=True)
     with c2:
-        st.subheader("Average % Change by Sector")
-        fig2 = px.bar(sec_breadth.sort_values("Avg % Change"),
-                      x="Avg % Change", y="Sector", orientation="h",
-                      color="Avg % Change", color_continuous_scale="RdYlGn")
-        fig2.update_layout(height=360, coloraxis_showscale=False)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.markdown("#### Avg % Change by Sector")
+        fig2 = px.bar(
+            sec_breadth.sort_values("Avg % Change"),
+            x="Avg % Change", y="Sector", orientation="h",
+            color="Avg % Change", color_continuous_scale="RdYlGn",
+        )
+        st.plotly_chart(_chart_dark(fig2, 360, colorscale=False), use_container_width=True)
 
-    st.subheader("% Change Distribution")
-    fig3 = px.histogram(df[(df["% Change"] > -20) & (df["% Change"] < 20)],
-                        x="% Change", nbins=80, color_discrete_sequence=["#6366f1"])
-    fig3.add_vline(x=0, line_dash="dash", line_color="white")
-    fig3.update_layout(height=260)
-    st.plotly_chart(fig3, use_container_width=True)
+    st.markdown("#### % Change Distribution")
+    fig3 = px.histogram(
+        df[(df["% Change"] > -20) & (df["% Change"] < 20)],
+        x="% Change", nbins=80, color_discrete_sequence=["#6366f1"],
+    )
+    fig3.add_vline(x=0, line_dash="dash", line_color="rgba(255,255,255,0.25)", line_width=1.5)
+    fig3.update_traces(marker_line_width=0, opacity=0.85)
+    st.plotly_chart(_chart_dark(fig3, 240), use_container_width=True)
 
     c1, c2 = st.columns(2)
     qualified = df[(df["Market Cap"] >= 50e6) & (df["Volume"] >= 50_000)]
     with c1:
-        st.subheader("Top 10 Gainers")
+        st.markdown("#### 🟢 Top 10 Gainers")
         top_g = qualified.nlargest(10, "% Change")
-        st.dataframe(top_g[["Symbol","Name","Last Sale","% Change","Volume"]].style.format(
-            {"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"}),
-            use_container_width=True, height=320)
+        st.dataframe(
+            top_g[["Symbol","Name","Last Sale","% Change","Volume"]].style
+            .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
+            .applymap(lambda v: "color:#22c55e;font-weight:700" if isinstance(v, str) and "+" in v else "", subset=["% Change"]),
+            use_container_width=True, height=330,
+        )
     with c2:
-        st.subheader("Top 10 Losers")
+        st.markdown("#### 🔴 Top 10 Losers")
         top_l = qualified.nsmallest(10, "% Change")
-        st.dataframe(top_l[["Symbol","Name","Last Sale","% Change","Volume"]].style.format(
-            {"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"}),
-            use_container_width=True, height=320)
+        st.dataframe(
+            top_l[["Symbol","Name","Last Sale","% Change","Volume"]].style
+            .format({"Last Sale":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}"})
+            .applymap(lambda v: "color:#ef4444;font-weight:700" if isinstance(v, (int, float)) and v < 0 else "", subset=["% Change"]),
+            use_container_width=True, height=330,
+        )
 
 
 def page_screener(df: pd.DataFrame):
-    st.title("📊 NASDAQ Stock Screener")
-    st.caption(f"Browse all {len(df):,} stocks from the NASDAQ screener snapshot")
+    st.title("NASDAQ Screener")
+    st.caption(f"{len(df):,} stocks · filter by price, cap, volume, sector, and direction")
 
-    with st.expander("🔧 Filters", expanded=True):
+    with st.expander("⚙️  Filters", expanded=True):
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             min_price = st.number_input("Min Price ($)", 0.0, value=0.5, step=0.5)
@@ -842,21 +1164,33 @@ def page_screener(df: pd.DataFrame):
 
     filtered = filter_df(df, min_price, max_price, min_cap, min_vol, sector, direction)
     filtered = filtered.sort_values(sort_col, ascending=asc)
-    st.metric("Matching Stocks", f"{len(filtered):,}", f"of {len(df):,} total")
+
+    match_pct = len(filtered)/len(df)*100
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Matching Stocks", f"{len(filtered):,}", f"{match_pct:.1f}% of universe")
+    c2.metric("Gainers in set", f"{int((filtered['% Change']>0).sum()):,}")
+    c3.metric("Avg Change", f"{filtered['% Change'].mean():+.2f}%" if len(filtered) else "—")
 
     st.dataframe(
         filtered[["Symbol","Name","Last Sale","Net Change","% Change","Volume","Market Cap","Sector","Industry","Country"]]
-        .head(500).style.format({"Last Sale":"${:.2f}","Net Change":"{:+.2f}",
-                                  "% Change":"{:+.2f}%","Volume":"{:,.0f}","Market Cap":"${:,.0f}"}),
-        use_container_width=True, height=540)
+        .head(500).style.format({
+            "Last Sale":"${:.2f}","Net Change":"{:+.2f}",
+            "% Change":"{:+.2f}%","Volume":"{:,.0f}","Market Cap":"${:,.0f}",
+        }),
+        use_container_width=True, height=540,
+    )
 
 
 def page_top_picks(df: pd.DataFrame):
-    st.title("🚀 Top High-Gain Picks")
-    st.caption("Stocks ranked by composite score. Enable live data for RSI, analyst targets, and MA signals.")
+    st.title("Top Picks")
+    st.caption("Composite-scored candidates · enable live data for RSI, MA signals, and analyst targets")
 
     with st.sidebar:
-        st.subheader("🔧 Filters")
+        st.markdown(
+            '<div style="color:#6366f1;font-size:0.7rem;font-weight:700;text-transform:uppercase;'
+            'letter-spacing:0.1em;margin-bottom:8px">⚙ Filters</div>',
+            unsafe_allow_html=True,
+        )
         min_price = st.slider("Min Price ($)", 0.5, 50.0, 1.0, 0.5)
         cap_opts = {"$50M+":50e6,"$100M+":100e6,"$300M+":300e6,"$1B+":1e9}
         min_cap = cap_opts[st.selectbox("Min Market Cap", list(cap_opts.keys()), index=1)]
@@ -867,8 +1201,9 @@ def page_top_picks(df: pd.DataFrame):
         dir_map = {"All":"All","Gainers Only":"Gainers","Losers Only":"Losers"}
         direction = dir_map[st.selectbox("Direction", list(dir_map.keys()))]
         top_n = st.slider("Results to show", 10, 150, 50)
+        st.markdown("---")
         fetch_live = st.checkbox("⚡ Fetch Live Data (yfinance)", value=False,
-                                  help="Adds RSI, MA signals, and analyst targets. ~30s for top 30.")
+                                  help="Adds RSI, MA signals, analyst targets. ~30s for top 30.")
 
     filtered = filter_df(df, min_price, 1e9, min_cap, min_vol, sector, direction)
     if filtered.empty:
@@ -879,7 +1214,7 @@ def page_top_picks(df: pd.DataFrame):
 
     if fetch_live:
         symbols = tuple(scored["Symbol"].tolist()[:30])
-        with st.spinner(f"Fetching live data for top {len(symbols)} candidates via yfinance…"):
+        with st.spinner(f"⚡ Fetching live data for {len(symbols)} candidates…"):
             live_list = fetch_live_data(symbols)
         live_dict = {r["symbol"]: r for r in live_list}
 
@@ -891,86 +1226,118 @@ def page_top_picks(df: pd.DataFrame):
             live = live_dict[sym]
             ls, _ = score_live(live)
             rows.append({
-                "Symbol": sym,
-                "Name": row["Name"][:35],
-                "Price": live["current_price"],
-                "RSI": live["rsi"],
+                "Symbol": sym, "Name": row["Name"][:35],
+                "Price": live["current_price"], "RSI": live["rsi"],
                 "vs 52w Low": live["pct_from_52w_low"],
                 "Analyst Upside %": live["analyst_upside"],
-                "Beta": live["beta"],
-                "Sector": row["Sector"],
-                "Live Score": ls,
+                "Beta": live["beta"], "Sector": row["Sector"], "Live Score": ls,
             })
 
         if not rows:
-            st.error("Could not retrieve live data. yfinance may be rate-limited — try again in a moment.")
+            st.error("Could not retrieve live data — yfinance may be rate-limited. Try again in a moment.")
             return
 
         result_df = pd.DataFrame(rows).sort_values("Live Score", ascending=False).reset_index(drop=True)
 
-        st.subheader("⭐ Top 3 Live-Scored Picks")
-        for col, (_, r) in zip(st.columns(3), result_df.head(3).iterrows()):
+        # Medal cards
+        st.markdown("#### 🏆 Top 3 Live-Scored")
+        cols = st.columns(3)
+        for i, (col, (_, r)) in enumerate(zip(cols, result_df.head(3).iterrows())):
             with col:
-                st.metric(r["Symbol"], f"${r['Price']:.2f}", f"Score: {r['Live Score']:.0f}/100")
-                st.caption(r["Name"])
                 upside = f"+{r['Analyst Upside %']:.1f}%" if r["Analyst Upside %"] else "No target"
-                st.write(f"RSI: {r['RSI']:.1f} | Analyst: {upside}")
+                st.markdown(
+                    _medal_card(i+1, r["Symbol"], r["Name"], r["Price"],
+                                0.0, r["Live Score"], r["Sector"]),
+                    unsafe_allow_html=True,
+                )
+                st.caption(f"RSI: {r['RSI']:.1f}  ·  Analyst upside: {upside}")
 
-        st.subheader("All Live-Scored Picks")
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+        st.markdown("#### Full Live-Scored List")
+
+        def _score_color(val):
+            t = max(0.0, min(1.0, val / 100.0))
+            r_ = int(220*(1-t)*2) if t >= 0.5 else 220
+            g_ = 220 if t >= 0.5 else int(220*t*2)
+            return f"background-color:rgba({r_},{g_},80,0.18);color:{'#4ade80' if t>0.6 else ('#facc15' if t>0.4 else '#f87171')};font-weight:700"
+
         st.dataframe(
-            result_df.style.format({
-                "Price": "${:.2f}", "RSI": "{:.1f}", "vs 52w Low": "{:+.1f}%",
+            result_df.style
+            .format({
+                "Price":"${:.2f}", "RSI":"{:.1f}", "vs 52w Low":"{:+.1f}%",
                 "Analyst Upside %": lambda x: f"+{x:.1f}%" if x else "N/A",
-                "Beta": lambda x: f"{x:.2f}" if x else "N/A", "Live Score": "{:.1f}",
-            }).background_gradient(subset=["Live Score"], cmap="RdYlGn"),
-            use_container_width=True, height=500)
-    else:
-        st.info("💡 Enable **Fetch Live Data** in the sidebar to add RSI, analyst targets, and MA signals from yfinance.")
+                "Beta": lambda x: f"{x:.2f}" if x else "N/A", "Live Score":"{:.1f}",
+            })
+            .map(_score_color, subset=["Live Score"]),
+            use_container_width=True, height=500,
+        )
 
-        for col, (_, r) in zip(st.columns(5), scored.head(5).iterrows()):
+    else:
+        st.markdown(
+            '<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.22);'
+            'border-radius:11px;padding:12px 16px;font-size:0.82rem;color:#94a3b8;margin-bottom:1rem">'
+            '⚡ Enable <b style="color:#a5b4fc">Fetch Live Data</b> in the sidebar to layer RSI, '
+            'analyst targets, and moving-average signals on top of the CSV score.</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Medal cards for top 3
+        st.markdown("#### 🏆 Top Ranked by Score")
+        cols = st.columns(3)
+        for i, (col, (_, r)) in enumerate(zip(cols, scored.head(3).iterrows())):
             with col:
-                st.metric(r["Symbol"], f"${r['Last Sale']:.2f}", f"{r['% Change']:+.2f}%")
-                st.caption(f"Score: **{r['score']:.0f}/100**")
+                st.markdown(
+                    _medal_card(i+1, r["Symbol"], r["Name"], r["Last Sale"],
+                                r["% Change"], r["score"], r["Sector"]),
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
         disp = scored[["Symbol","Name","Last Sale","% Change","Volume","Market Cap","Sector","score"]].rename(
             columns={"Last Sale":"Price","score":"Score"})
+
         def _score_color(val):
-            # Red→Yellow→Green without matplotlib
             t = max(0.0, min(1.0, val / 100.0))
-            if t < 0.5:
-                r, g = 220, int(220 * t * 2)
-            else:
-                r, g = int(220 * (1 - t) * 2), 220
-            return f"background-color: rgb({r},{g},80); color: #111"
+            r_ = int(220*(1-t)*2) if t >= 0.5 else 220
+            g_ = 220 if t >= 0.5 else int(220*t*2)
+            return f"background-color:rgba({r_},{g_},80,0.18);color:{'#4ade80' if t>0.6 else ('#facc15' if t>0.4 else '#f87171')};font-weight:700"
+
+        def _pct_color(val):
+            if isinstance(val, (int, float)):
+                return f"color:{'#4ade80' if val>0 else '#f87171'};font-weight:600"
+            return ""
 
         st.dataframe(
-            disp.style.format({"Price":"${:.2f}","% Change":"{:+.2f}%",
-                               "Volume":"{:,.0f}","Market Cap":"${:,.0f}","Score":"{:.1f}"})
-            .map(_score_color, subset=["Score"]),
-            use_container_width=True, height=480)
+            disp.style
+            .format({"Price":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}",
+                     "Market Cap":"${:,.0f}","Score":"{:.1f}"})
+            .map(_score_color, subset=["Score"])
+            .map(_pct_color, subset=["% Change"]),
+            use_container_width=True, height=460,
+        )
 
         c1, c2 = st.columns(2)
         with c1:
-            st.subheader("Score Distribution")
+            st.markdown("#### Score Distribution")
             fig = px.histogram(scored, x="score", nbins=20, color_discrete_sequence=["#6366f1"])
-            fig.update_layout(height=280)
-            st.plotly_chart(fig, use_container_width=True)
+            fig.update_traces(marker_line_width=0, opacity=0.85)
+            st.plotly_chart(_chart_dark(fig, 260), use_container_width=True)
         with c2:
-            st.subheader("Sector Breakdown")
+            st.markdown("#### Sector Mix")
             sec_c = scored.groupby("Sector").size().reset_index(name="Count")
             fig2 = px.bar(sec_c.sort_values("Count"), x="Count", y="Sector",
-                          orientation="h", color="Count", color_continuous_scale="viridis")
-            fig2.update_layout(height=280, coloraxis_showscale=False)
-            st.plotly_chart(fig2, use_container_width=True)
+                          orientation="h", color="Count", color_continuous_scale="Purples")
+            st.plotly_chart(_chart_dark(fig2, 260), use_container_width=True)
 
 
 def page_stock_detail(df: pd.DataFrame):
-    st.title("🔍 Stock Detail")
-    st.caption("CSV snapshot + live data from yfinance: RSI, moving averages, analyst targets, and 52-week range")
+    st.title("Stock Detail")
+    st.caption("CSV snapshot + live yfinance data: price chart, RSI, moving averages, analyst targets, and score")
 
     symbols = sorted(df["Symbol"].dropna().unique().tolist())
     default_idx = symbols.index("AAPL") if "AAPL" in symbols else 0
-    selected = st.selectbox("Choose a stock", symbols, index=default_idx)
+    selected = st.selectbox("Search ticker", symbols, index=default_idx)
 
     rows = df[df["Symbol"] == selected]
     if rows.empty:
@@ -980,16 +1347,46 @@ def page_stock_detail(df: pd.DataFrame):
     row = rows.iloc[0]
     scored = compute_scores(rows)
     csv_score = float(scored["score"].iloc[0])
+    pct_color = "#22c55e" if row["% Change"] >= 0 else "#ef4444"
+    pct_sign  = "+" if row["% Change"] >= 0 else ""
 
-    st.subheader(f"{selected} — {row['Name']}")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Last Price (CSV)", f"${row['Last Sale']:.2f}", f"{row['Net Change']:+.2f}")
-    c2.metric("Daily % Change", f"{row['% Change']:+.2f}%")
-    c3.metric("Volume", f"{row['Volume']:,.0f}")
-    c4.metric("Market Cap", _fmt_mcap(row["Market Cap"]))
-
-    st.markdown(f"**Sector:** {row['Sector']}  |  **Industry:** {row.get('Industry','N/A')}  |  **Country:** {row['Country']}")
-    st.markdown("---")
+    # ── Stock header card ──────────────────────────────────────────────────────
+    st.markdown(f"""
+    <div style="
+        background:linear-gradient(135deg,#0c1525 0%,#0f1d38 100%);
+        border:1px solid rgba(99,102,241,0.25); border-radius:18px;
+        padding:22px 26px; margin-bottom:1.2rem;
+        box-shadow:0 6px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);
+    ">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:1.9rem;font-weight:800;
+                color:#a5b4fc;letter-spacing:0.04em">{selected}</span>
+            {_badge(row['Sector'], "#6366f1") if row['Sector'] != 'Unknown' else ''}
+          </div>
+          <div style="color:#64748b;font-size:0.88rem;font-weight:500;margin-bottom:10px">{row['Name']}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <span style="color:#94a3b8;font-size:0.8rem">📍 {row['Country']}</span>
+            <span style="color:#94a3b8;font-size:0.8rem">🏭 {row.get('Industry','N/A')}</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="color:#e2e8f0;font-size:2.4rem;font-weight:900;letter-spacing:-0.035em;line-height:1">
+            ${row['Last Sale']:.2f}
+          </div>
+          <div style="color:{pct_color};font-size:1.1rem;font-weight:700;margin-top:4px">
+            {pct_sign}{row['% Change']:.2f}%&nbsp;
+            <span style="font-size:0.85rem;opacity:0.8">({row['Net Change']:+.2f})</span>
+          </div>
+          <div style="color:#475569;font-size:0.75rem;margin-top:6px">
+            Vol {row['Volume']:,.0f} · {_fmt_mcap(row['Market Cap'])} cap · CSV score
+            <b style="color:#a5b4fc">{csv_score:.0f}/100</b>
+          </div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.button("⚡ Fetch Live Analysis (yfinance)", type="primary"):
         with st.spinner(f"Fetching live data for {selected}…"):
@@ -1003,57 +1400,85 @@ def page_stock_detail(df: pd.DataFrame):
             price = live["current_price"]
 
             lc1, lc2, lc3, lc4 = st.columns(4)
-            lc1.metric("Live Price", f"${price:.2f}")
             rsi = live["rsi"]
+            lc1.metric("Live Price", f"${price:.2f}")
             lc2.metric("RSI (14)", f"{rsi:.1f}",
-                        "Oversold 🟢" if rsi < 35 else ("Overbought 🔴" if rsi > 70 else "Neutral ⚪"))
+                       "Oversold" if rsi < 35 else ("Overbought" if rsi > 70 else "Neutral"))
             if live["analyst_upside"] is not None:
                 lc3.metric("Analyst Upside", f"{live['analyst_upside']:+.1f}%",
-                            f"Target: ${live['analyst_target']:.2f}")
+                           f"Target: ${live['analyst_target']:.2f}")
             else:
                 lc3.metric("Analyst Upside", "N/A")
             lc4.metric("Beta", f"{live['beta']:.2f}" if live["beta"] else "N/A")
 
-            st.subheader("Price Chart — 3 Months")
+            st.markdown("#### Price Chart — 3 Months")
             fig = go.Figure()
-            fig.add_trace(go.Candlestick(x=hist.index, open=hist["Open"], high=hist["High"],
-                                          low=hist["Low"], close=hist["Close"], name="Price"))
+            fig.add_trace(go.Candlestick(
+                x=hist.index, open=hist["Open"], high=hist["High"],
+                low=hist["Low"], close=hist["Close"], name="OHLC",
+                increasing_line_color="#22c55e", decreasing_line_color="#ef4444",
+                increasing_fillcolor="rgba(34,197,94,0.15)",
+                decreasing_fillcolor="rgba(239,68,68,0.15)",
+            ))
             if len(hist) >= 20:
                 fig.add_trace(go.Scatter(x=hist.index, y=hist["Close"].rolling(20).mean(),
-                                          name="MA20", line=dict(color="#f59e0b", width=1.5)))
+                                         name="MA20", line=dict(color="#f59e0b", width=1.5)))
             if len(hist) >= 50:
                 fig.add_trace(go.Scatter(x=hist.index, y=hist["Close"].rolling(50).mean(),
-                                          name="MA50", line=dict(color="#3b82f6", width=1.5)))
-            fig.update_layout(xaxis_rangeslider_visible=False, height=420)
-            st.plotly_chart(fig, use_container_width=True)
+                                         name="MA50", line=dict(color="#6366f1", width=1.5)))
+            fig.update_layout(xaxis_rangeslider_visible=False)
+            st.plotly_chart(_chart_dark(fig, 420), use_container_width=True)
 
             cl, cr = st.columns(2)
             with cl:
-                st.subheader("52-Week Range")
+                st.markdown("#### 52-Week Range")
                 lo, hi = live["week52_low"], live["week52_high"]
-                pct = float(np.clip((price - lo) / (hi - lo + 1e-9), 0, 1))
-                st.progress(pct)
-                st.caption(f"Low: ${lo:.2f}  ·  Now: ${price:.2f}  ·  High: ${hi:.2f}")
+                pct_pos = float(np.clip((price - lo) / (hi - lo + 1e-9), 0, 1))
+                st.progress(pct_pos)
+                st.markdown(
+                    f'<div style="display:flex;justify-content:space-between;color:#64748b;font-size:0.78rem;margin-top:4px">'
+                    f'<span>Low&nbsp;<b style="color:#e2e8f0">${lo:.2f}</b></span>'
+                    f'<span>Now&nbsp;<b style="color:#a5b4fc">${price:.2f}</b></span>'
+                    f'<span>High&nbsp;<b style="color:#e2e8f0">${hi:.2f}</b></span></div>',
+                    unsafe_allow_html=True,
+                )
             with cr:
-                st.subheader("Volume (30d)")
-                vfig = px.bar(hist.tail(30), x=hist.tail(30).index, y="Volume",
-                              color_discrete_sequence=["#6366f1"])
-                vfig.update_layout(height=220, showlegend=False)
-                st.plotly_chart(vfig, use_container_width=True)
+                st.markdown("#### Volume — Last 30 Days")
+                v30 = hist.tail(30)
+                vfig = px.bar(v30, x=v30.index, y="Volume", color_discrete_sequence=["#6366f1"])
+                vfig.update_traces(opacity=0.85, marker_line_width=0)
+                vfig.update_layout(showlegend=False)
+                st.plotly_chart(_chart_dark(vfig, 220), use_container_width=True)
 
             live_score, breakdown = score_live(live)
-            st.subheader(f"Live High-Gain Score: {live_score:.1f} / 100")
+            score_pct = live_score / 100
+            score_col = "#22c55e" if score_pct > 0.65 else ("#f59e0b" if score_pct > 0.4 else "#ef4444")
+            st.markdown(
+                f'<div style="display:flex;align-items:center;gap:12px;margin:1rem 0 0.4rem">'
+                f'<span style="color:#cbd5e1;font-size:1rem;font-weight:700">Live Score</span>'
+                f'<span style="color:{score_col};font-size:1.7rem;font-weight:900;letter-spacing:-0.03em">'
+                f'{live_score:.1f}<span style="font-size:1rem;opacity:0.6">/100</span></span></div>',
+                unsafe_allow_html=True,
+            )
             sfig = px.bar(x=list(breakdown.keys()), y=list(breakdown.values()),
                           color=list(breakdown.values()), color_continuous_scale="RdYlGn",
                           range_color=[0, 100])
-            sfig.update_layout(height=240, coloraxis_showscale=False, yaxis_range=[0, 100])
-            st.plotly_chart(sfig, use_container_width=True)
+            sfig.update_traces(marker_line_width=0, opacity=0.9)
+            sfig.update_layout(yaxis_range=[0, 100])
+            st.plotly_chart(_chart_dark(sfig, 220), use_container_width=True)
+
     else:
-        st.info("Click **Fetch Live Analysis** to load the yfinance chart, RSI, analyst targets, and live score.")
-        st.subheader(f"CSV Score: {csv_score:.1f} / 100")
+        st.markdown(
+            '<div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);'
+            'border-radius:11px;padding:12px 16px;font-size:0.82rem;color:#94a3b8;margin-bottom:1rem">'
+            '⚡ Click <b style="color:#a5b4fc">Fetch Live Analysis</b> above to load the yfinance chart, '
+            'RSI, analyst targets, and live score.</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(f"#### CSV Score: {csv_score:.1f} / 100")
         csv_factors = {
             "Momentum": float(scored["momentum_score"].iloc[0]),
-            "Volume": float(scored["volume_score"].iloc[0]),
+            "Volume":   float(scored["volume_score"].iloc[0]),
             "Market Cap": float(scored["mcap_score"].iloc[0]),
             "Price Range": float(scored["price_score"].iloc[0]),
             "Direction": float(scored["direction_score"].iloc[0]),
@@ -1061,67 +1486,120 @@ def page_stock_detail(df: pd.DataFrame):
         sfig = px.bar(x=list(csv_factors.keys()), y=list(csv_factors.values()),
                       color=list(csv_factors.values()), color_continuous_scale="RdYlGn",
                       range_color=[0, 100])
-        sfig.update_layout(height=240, coloraxis_showscale=False, yaxis_range=[0, 100])
-        st.plotly_chart(sfig, use_container_width=True)
+        sfig.update_traces(marker_line_width=0, opacity=0.9)
+        sfig.update_layout(yaxis_range=[0, 100])
+        st.plotly_chart(_chart_dark(sfig, 220), use_container_width=True)
 
     st.markdown("---")
-    st.subheader(f"Top Sector Peers — {row['Sector']}")
+    st.markdown(f"#### Top Peers — {row['Sector']}")
     peers = df[(df["Sector"] == row["Sector"]) & (df["Symbol"] != selected)]
     if not peers.empty:
         peer_sc = compute_scores(peers).nlargest(10, "score")
         st.dataframe(
-            peer_sc[["Symbol","Name","Last Sale","% Change","Volume","score"]].rename(
-                columns={"Last Sale":"Price","score":"Score"})
+            peer_sc[["Symbol","Name","Last Sale","% Change","Volume","score"]]
+            .rename(columns={"Last Sale":"Price","score":"Score"})
             .style.format({"Price":"${:.2f}","% Change":"{:+.2f}%","Volume":"{:,.0f}","Score":"{:.1f}"}),
-            use_container_width=True, height=300)
+            use_container_width=True, height=300,
+        )
 
 
 def page_ai_agent(df: pd.DataFrame):
-    st.title("💬 AI Stock Analysis Agent")
-    st.caption("Powered by GPT — asks live NASDAQ data, explains concepts, and answers naturally.")
+    st.title("AI Agent")
+    st.caption("GPT-powered · live NASDAQ data · tool-calling · streaming")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "pending_q" not in st.session_state:
         st.session_state.pending_q = None
 
+    quick_qs = [
+        "What's the market looking like today?",
+        "Show me the top picks",
+        "Who are the biggest gainers?",
+        "Which stocks are falling the most?",
+        "Most active stocks right now",
+        "How is the tech sector doing?",
+        "Tell me about NVDA",
+        "Compare AAPL vs MSFT vs GOOGL",
+        "Explain RSI",
+        "What is a short squeeze?",
+        "How does momentum investing work?",
+        "What is market cap?",
+    ]
+
     with st.sidebar:
-        st.subheader("💡 Ask something like…")
-        quick_qs = [
-            "What's the market looking like today?",
-            "Show me the top picks",
-            "Who are the biggest gainers?",
-            "Which stocks are falling the most?",
-            "Most active stocks right now",
-            "How is the tech sector doing?",
-            "Tell me about NVDA",
-            "Compare AAPL vs MSFT vs GOOGL",
-            "Explain RSI",
-            "What is a short squeeze?",
-            "How does momentum investing work?",
-            "What is market cap?",
-        ]
+        st.markdown(
+            '<div style="color:#6366f1;font-size:0.7rem;font-weight:700;text-transform:uppercase;'
+            'letter-spacing:0.1em;margin-bottom:8px">💡 Quick prompts</div>',
+            unsafe_allow_html=True,
+        )
         for q in quick_qs:
             if st.button(q, use_container_width=True, key=f"q_{q[:22]}"):
                 st.session_state.pending_q = q
                 st.rerun()
 
         st.markdown("---")
-        if st.button("🗑 Clear Chat", use_container_width=True):
+        if st.button("🗑  Clear conversation", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
-
         st.markdown("---")
-        st.caption("**Tips:**")
-        st.caption("• Natural language: *How is energy doing?*")
-        st.caption("• Any ticker: *Tell me about TSLA*")
-        st.caption("• Compare: *AAPL vs MSFT vs AMZN*")
-        st.caption("• For live RSI & charts → Stock Detail")
+        st.markdown(
+            '<div style="color:#3d4f68;font-size:0.72rem;line-height:1.7">'
+            '⚡ <b style="color:#64748b">Tip:</b> Ask naturally<br>'
+            '&nbsp;&nbsp;• <i>How is energy doing?</i><br>'
+            '&nbsp;&nbsp;• <i>Tell me about TSLA</i><br>'
+            '&nbsp;&nbsp;• <i>AAPL vs MSFT vs AMZN</i><br>'
+            '&nbsp;&nbsp;• <i>Explain MACD</i><br><br>'
+            'For live RSI & charts →<br><b style="color:#6366f1">Stock Detail</b></div>',
+            unsafe_allow_html=True,
+        )
 
+    # ── Welcome screen (empty state) ──────────────────────────────────────────
+    if not st.session_state.messages:
+        st.markdown("""
+        <div style="text-align:center;padding:2.5rem 1rem 1.5rem">
+          <div style="font-size:2.8rem;margin-bottom:0.6rem">⚡</div>
+          <div style="color:#e2e8f0;font-size:1.4rem;font-weight:800;letter-spacing:-0.025em;margin-bottom:0.4rem">
+            Ask me anything about the market
+          </div>
+          <div style="color:#475569;font-size:0.85rem;max-width:440px;margin:0 auto">
+            I have live access to 7,000+ NASDAQ stocks. I can look up tickers, compare stocks,
+            analyze sectors, explain concepts, and more.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Feature cards
+        features = [
+            ("📈", "Market & Sectors", "How is tech doing? What's the market breadth today?"),
+            ("🔍", "Stock Lookup", "Tell me about NVDA · Analyze TSLA · What is AAPL's score?"),
+            ("⚖️", "Compare Stocks", "AAPL vs MSFT vs GOOGL · Who has the best score?"),
+            ("🎓", "Learn Concepts", "Explain RSI · What is a short squeeze · How does MACD work?"),
+        ]
+        cols = st.columns(2)
+        for i, (icon, title, desc) in enumerate(features):
+            with cols[i % 2]:
+                st.markdown(f"""
+                <div style="
+                    background:linear-gradient(135deg,#0c1525,#0f1d38);
+                    border:1px solid rgba(99,102,241,0.2); border-radius:14px;
+                    padding:16px 18px; margin-bottom:10px;
+                    box-shadow:0 3px 16px rgba(0,0,0,0.35);
+                ">
+                  <div style="font-size:1.3rem;margin-bottom:6px">{icon}</div>
+                  <div style="color:#a5b4fc;font-size:0.85rem;font-weight:700;margin-bottom:4px">{title}</div>
+                  <div style="color:#475569;font-size:0.75rem;line-height:1.5">{desc}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+
+    # ── Chat history ──────────────────────────────────────────────────────────
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
+    # ── Input ─────────────────────────────────────────────────────────────────
     prompt = st.session_state.pending_q
     if prompt:
         st.session_state.pending_q = None
@@ -1133,11 +1611,9 @@ def page_ai_agent(df: pd.DataFrame):
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        history = st.session_state.messages[:-1]  # history without current user msg
+        history = st.session_state.messages[:-1]
         with st.chat_message("assistant"):
-            response_text = st.write_stream(
-                agent_respond_stream(prompt, df, history)
-            )
+            response_text = st.write_stream(agent_respond_stream(prompt, df, history))
 
         st.session_state.messages.append({"role": "assistant", "content": response_text})
 
@@ -1147,32 +1623,70 @@ def page_ai_agent(df: pd.DataFrame):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def main():
+    _inject_css()
     df = load_data()
 
-    st.sidebar.title("📈 Stock Analyzer")
-    st.sidebar.markdown("---")
-
-    page = st.sidebar.radio("Navigate", [
-        "🌐 Market Overview",
-        "📊 Screener",
-        "🚀 Top Picks",
-        "🔍 Stock Detail",
-        "💬 AI Agent",
-    ])
-
-    st.sidebar.markdown("---")
     gainers = int((df["% Change"] > 0).sum())
-    losers = int((df["% Change"] < 0).sum())
-    st.sidebar.caption(f"**{len(df):,} stocks** loaded")
-    st.sidebar.caption(f"🟢 {gainers:,} gainers  |  🔴 {losers:,} losers")
-    st.sidebar.caption("CSV data · Live via yfinance")
+    losers  = int((df["% Change"] < 0).sum())
+    avg_chg = df["% Change"].mean()
+    sent_color = "#22c55e" if avg_chg > 0.5 else ("#ef4444" if avg_chg < -0.5 else "#f59e0b")
+
+    # ── Sidebar branding ───────────────────────────────────────────────────────
+    st.sidebar.markdown(f"""
+    <div style="padding:14px 6px 18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="font-size:1.5rem">⚡</span>
+        <div>
+          <div style="color:#e2e8f0;font-size:1.05rem;font-weight:800;letter-spacing:-0.02em;line-height:1.2">
+            NASDAQ Terminal
+          </div>
+          <div style="color:#3d4f68;font-size:0.66rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">
+            AI-Powered Screener
+          </div>
+        </div>
+      </div>
+      <div style="
+          margin-top:12px;
+          background:rgba(8,16,31,0.7);
+          border:1px solid rgba(99,102,241,0.18);
+          border-radius:10px; padding:10px 12px;
+      ">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="color:#3d4f68;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:700">Universe</span>
+          <span style="color:#94a3b8;font-size:0.78rem;font-weight:600">{len(df):,} stocks</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="color:#22c55e;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">▲ Gainers</span>
+          <span style="color:#22c55e;font-size:0.78rem;font-weight:600">{gainers:,}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="color:#ef4444;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">▼ Losers</span>
+          <span style="color:#ef4444;font-size:0.78rem;font-weight:600">{losers:,}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#3d4f68;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">Avg Chg</span>
+          <span style="color:{sent_color};font-size:0.78rem;font-weight:700">{avg_chg:+.2f}%</span>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    nav_labels = ["🌐  Market Overview","📊  Screener","🚀  Top Picks","🔍  Stock Detail","💬  AI Agent"]
+    page = st.sidebar.radio("nav", nav_labels, label_visibility="collapsed")
+
+    st.sidebar.markdown(
+        '<div style="color:#1e293b;font-size:0.65rem;text-align:center;margin-top:18px;'
+        'padding:8px;border-top:1px solid rgba(99,102,241,0.1)">'
+        'NASDAQ data · live via yfinance</div>',
+        unsafe_allow_html=True,
+    )
 
     pages = {
-        "🌐 Market Overview": page_market_overview,
-        "📊 Screener": page_screener,
-        "🚀 Top Picks": page_top_picks,
-        "🔍 Stock Detail": page_stock_detail,
-        "💬 AI Agent": page_ai_agent,
+        "🌐  Market Overview": page_market_overview,
+        "📊  Screener":        page_screener,
+        "🚀  Top Picks":       page_top_picks,
+        "🔍  Stock Detail":    page_stock_detail,
+        "💬  AI Agent":        page_ai_agent,
     }
     pages[page](df)
 
