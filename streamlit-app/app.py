@@ -777,10 +777,19 @@ def page_top_picks(df: pd.DataFrame):
 
         disp = scored[["Symbol","Name","Last Sale","% Change","Volume","Market Cap","Sector","score"]].rename(
             columns={"Last Sale":"Price","score":"Score"})
+        def _score_color(val):
+            # Red→Yellow→Green without matplotlib
+            t = max(0.0, min(1.0, val / 100.0))
+            if t < 0.5:
+                r, g = 220, int(220 * t * 2)
+            else:
+                r, g = int(220 * (1 - t) * 2), 220
+            return f"background-color: rgb({r},{g},80); color: #111"
+
         st.dataframe(
             disp.style.format({"Price":"${:.2f}","% Change":"{:+.2f}%",
                                "Volume":"{:,.0f}","Market Cap":"${:,.0f}","Score":"{:.1f}"})
-            .background_gradient(subset=["Score"], cmap="RdYlGn"),
+            .map(_score_color, subset=["Score"]),
             use_container_width=True, height=480)
 
         c1, c2 = st.columns(2)
