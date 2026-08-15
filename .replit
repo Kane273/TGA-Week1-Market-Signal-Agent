@@ -9,28 +9,7 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Stock Analyzer"
-
-[[workflows.workflow]]
-name = "Stock Analyzer"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run streamlit-app/app.py --server.port 5000"
-waitForPort = 5000
+runButton = "artifacts/stock-analyzer: web"
 
 [agent]
 stack = "PNPM_WORKSPACE"
