@@ -21,7 +21,7 @@ BASE_PATH = "/"
 [services.production]
 
 [services.production.build]
-args = ["bash", "-lc", "python -m pip install --no-cache-dir -r streamlit-app/requirements.txt"]
+args = ["bash", "-lc", "uv pip install --python /home/runner/workspace/.pythonlibs/bin/python --no-cache -r streamlit-app/requirements.txt"]
 
 [services.production.run]
 args = ["bash", "-lc", "streamlit run streamlit-app/app.py --server.address 0.0.0.0 --server.port ${PORT}"]
