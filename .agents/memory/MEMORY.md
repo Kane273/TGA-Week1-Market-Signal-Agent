@@ -1,0 +1,1 @@
+- [Python publishing installer](python-publishing-installer.md) — Published Python runs use the `.pythonlibs` interpreter without an embedded pip module; use uv pip with an explicit interpreter.
